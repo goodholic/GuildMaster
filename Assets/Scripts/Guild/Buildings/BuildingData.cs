@@ -1,5 +1,8 @@
 using UnityEngine;
+using System;
 using System.Collections.Generic;
+using System.Linq;
+using GuildMaster.Battle; // JobClass를 위해 추가
 
 namespace GuildMaster.Guild
 {
@@ -8,8 +11,12 @@ namespace GuildMaster.Guild
     {
         public Core.GuildManager.BuildingType Type { get; set; }
         public string Name { get; set; }
+        public string name { get; set; } // UI에서 사용하는 필드
         public string Description { get; set; }
         public int Level { get; set; }
+        public int maxLevel { get; set; } = 10; // 최대 레벨
+        public int baseGoldCost { get; set; } = 100; // 기본 골드 비용
+        public Core.GuildManager.BuildingType buildingType { get; set; } // 타입 별칭
         public Vector2Int Position { get; set; }
         public bool IsConstructing { get; set; }
         public float ConstructionTimeRemaining { get; set; }
@@ -19,17 +26,26 @@ namespace GuildMaster.Guild
         public float EffectPerLevel { get; set; }
         public float ProductionRate { get; set; }
         public float LastProductionTime { get; set; }
+        public bool isProducer { get; set; } // 생산 건물 여부
         
         // Construction Requirements
         public BuildingRequirements BaseRequirements { get; set; }
         public float CostMultiplierPerLevel { get; set; } = 1.5f;
         public float TimeMultiplierPerLevel { get; set; } = 1.2f;
         
+        public BuildingData()
+        {
+            name = Name; // name 필드를 Name으로 동기화
+            buildingType = Type; // buildingType을 Type으로 동기화
+        }
+        
         public BuildingData(Core.GuildManager.BuildingType type)
         {
             Type = type;
+            buildingType = type;
             Level = 1;
             InitializeBuildingData();
+            name = Name; // 초기화 후 동기화
         }
         
         void InitializeBuildingData()
@@ -58,6 +74,7 @@ namespace GuildMaster.Guild
                     BaseEffect = 1; // 1 research point per hour
                     EffectPerLevel = 0.5f;
                     ProductionRate = 1;
+                    isProducer = true;
                     BaseRequirements = new BuildingRequirements { Gold = 200, Stone = 100, ManaStone = 50 };
                     break;
                     
@@ -99,6 +116,7 @@ namespace GuildMaster.Guild
                     BaseEffect = 10; // 10 gold per minute
                     EffectPerLevel = 5;
                     ProductionRate = 10;
+                    isProducer = true;
                     BaseRequirements = new BuildingRequirements { Gold = 100, Wood = 100 };
                     break;
                     
@@ -199,6 +217,16 @@ namespace GuildMaster.Guild
                 default: return 5;
             }
         }
+
+        public Dictionary<string, int> GetRefundResources(int level = 1)
+        {
+            var refund = new Dictionary<string, int>();
+            refund["gold"] = baseGoldCost * level / 2;
+            refund["wood"] = BaseRequirements?.Wood ?? 0 * level / 2;
+            refund["stone"] = BaseRequirements?.Stone ?? 0 * level / 2;
+            refund["mana"] = BaseRequirements?.ManaStone ?? 0 * level / 2;
+            return refund;
+        }
     }
     
     [System.Serializable]
@@ -288,6 +316,39 @@ namespace GuildMaster.Guild
             }
             
             return bonus / 100f; // Convert percentage to multiplier
+        }
+    }
+
+    [System.Serializable]
+    public class BuildingStats
+    {
+        public int maxAdventurers;
+        public float trainingSpeed;
+        public float researchSpeed;
+        public int storageCapacity;
+        public int goldProduction;
+        public int woodProduction;
+        public int stoneProduction;
+        public int manaProduction;
+        public int defenseBonus;
+        public int attackBonus;
+        public int healthBonus;
+        public int manaBonus;
+        
+        public BuildingStats()
+        {
+            maxAdventurers = 0;
+            trainingSpeed = 1.0f;
+            researchSpeed = 1.0f;
+            storageCapacity = 0;
+            goldProduction = 0;
+            woodProduction = 0;
+            stoneProduction = 0;
+            manaProduction = 0;
+            defenseBonus = 0;
+            attackBonus = 0;
+            healthBonus = 0;
+            manaBonus = 0;
         }
     }
 }

@@ -1,25 +1,46 @@
 using UnityEngine;
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using GuildMaster.Battle; // StatusEffect를 위해 추가
 
-namespace GuildMaster
+namespace GuildMaster.Battle
 {
     public enum JobClass
     {
         None,
         Warrior,    // 전사: 높은 HP와 물리 공격력
         Knight,     // 기사: 최고의 방어력과 아군 보호 능력
-        Mage,       // 마법사: 강력한 마법 공격력과 광역 스킬
+        Mage,       // 마법사: 강력한 마법 공격력과 광역 스킬 (Wizard -> Mage로 변경)
         Priest,     // 성직자: 힐링과 부활 마법의 전문가
-        Assassin,   // 도적: 빠른 속도와 크리티컬 특화
-        Ranger,     // 궁수: 원거리 물리 공격의 달인
-        Sage        // 현자: 마법과 물리를 아우르는 만능형
+        Assassin,   // 도적: 빠른 속도와 크리티컬 특화 (Rogue -> Assassin으로 변경)
+        Ranger,     // 궁수: 원거리 물리 공격의 달인 (Archer -> Ranger로 변경)
+        Sage,       // 현자: 마법과 물리를 아우르는 만능형
+        Archer,     // 호환성을 위한 별칭 (Ranger와 동일)
+        All,        // 모든 직업 (스킬 호환성용)
+        Rogue,      // Assassin의 별칭
+        Bard,       // 음유시인 (새로운 직업)
+        Blacksmith, // 대장장이 (시설 관련 직업)
+        Merchant    // 상인 (시설 관련 직업)
     }
     
-    public enum UnitRank
+    // Class enum을 JobClass와 호환되도록 alias 생성
+    public enum Class
+    {
+        None = JobClass.None,
+        Warrior = JobClass.Warrior,
+        Knight = JobClass.Knight,
+        Wizard = JobClass.Mage,
+        Priest = JobClass.Priest,
+        Rogue = JobClass.Assassin,
+        Archer = JobClass.Ranger,
+        Sage = JobClass.Sage
+    }
+    
+    public enum Rarity
     {
         Common,     // 일반
-        Uncommon,   // 희귀
+        Uncommon,   // 고급
         Rare,       // 희귀
         Epic,       // 영웅
         Legendary   // 전설
@@ -29,59 +50,87 @@ namespace GuildMaster
     public class Unit
     {
         // Basic Info
-        public string UnitId { get; set; }
-        public string Name { get; set; }
-        public int Level { get; set; }
-        public JobClass JobClass { get; set; }
-        public UnitRank Rank { get; set; }
-        public bool IsPlayerUnit { get; set; }
-        public int Experience { get; set; }
-        public int ExperienceToNextLevel { get; set; }
+        public string unitId;
+        public string unitName;
+        public int level;
+        public JobClass jobClass;  // unitClass를 jobClass로 변경
+        public JobClass JobClass => jobClass;  // 호환성을 위한 속성
+        public Class unitClass => (Class)jobClass;  // 기존 호환성 유지
+        public Rarity rarity;
+        public bool isPlayerUnit;
+        public int experience;
+        public int experienceToNextLevel;
         
         // Job Mastery
-        public float JobMastery { get; set; } // 0-100
-        public int AwakeningLevel { get; set; } // 0-5 각성 레벨
+        public float jobMastery; // 0-100
+        public int awakeningLevel; // 0-5 각성 레벨
 
         // Position in Battle
-        public int SquadIndex { get; private set; }
-        public int Row { get; private set; }
-        public int Col { get; private set; }
+        public int currentSquad;
+        public Vector2Int gridPosition;
+        public float formationBuff = 1f;
 
         // Base Stats
-        public float MaxHealth { get; set; }
-        public float CurrentHealth { get; set; }
-        public float MaxMana { get; set; }
-        public float CurrentMana { get; set; }
-        public float Attack { get; set; }
-        public float Defense { get; set; }
-        public float MagicPower { get; set; }
-        public float Speed { get; set; }
-        public float CriticalRate { get; set; }
-        public float CriticalDamage { get; set; }
-        public float Accuracy { get; set; }
-        public float Evasion { get; set; }
+        public float maxHP;
+        public float currentHP;
+        public float maxMP;
+        public float currentMP;
+        public float attackPower;
+        public float defense;
+        public float magicPower;
+        public float magicResistance; // 마법 저항력 추가
+        public float speed;
+        public float criticalRate;
+        public float criticalDamage;
+        public float accuracy;
+        public float evasion;
+        
+        // 추가 속성들
+        public float MaxHealth => maxHP;
+        public float CurrentHealth => currentHP;
+        public float MaxMana => maxMP;
+        public float CurrentMana => currentMP;
+        public float Attack => attackPower;
+        public float MagicPower => magicPower;
+        public float Defense => defense;
+        public int Level { get; set; }
+        public string UnitId => unitId;
+        public string Name => unitName;
+        public bool IsPlayerUnit => isPlayerUnit;
+        public bool IsAlive => isAlive;
+        public float Speed => speed;
+        public float CriticalRate => criticalRate;
+        public float Accuracy => accuracy;
+        public int Experience => experience;
+        public int SquadIndex => currentSquad;
+        public int Row => gridPosition.x;
+        public int Col => gridPosition.y;
         
         // Shield system
-        public float CurrentShield { get; set; }
-        public float MaxShield { get; set; }
+        public float currentShield;
+        public float maxShield;
+
+        // Skills
+        public List<int> skillIds = new List<int>();
+        public List<StatusEffect> activeStatusEffects = new List<StatusEffect>();
 
         // State
-        public bool IsAlive => CurrentHealth > 0;
+        public bool isAlive => currentHP > 0;
         
         // Combat Stats (Calculated)
-        public float AttackPower => CalculateAttackPower();
-        public float MagicAttackPower => CalculateMagicAttackPower();
-        public float PhysicalDefense => CalculatePhysicalDefense();
-        public float MagicalDefense => CalculateMagicalDefense();
-        public float HealingPower => CalculateHealingPower();
+        public float effectiveAttackPower => CalculateAttackPower();
+        public float effectiveMagicPower => CalculateMagicAttackPower();
+        public float effectiveDefense => CalculatePhysicalDefense();
+        public float effectiveMagicDefense => CalculateMagicalDefense();
+        public float effectiveHealingPower => CalculateHealingPower();
         
         // Job-specific abilities
         public class JobAbility
         {
-            public string Name { get; set; }
-            public string Description { get; set; }
-            public float Chance { get; set; } // Chance to trigger
-            public float Value { get; set; }   // Effect value
+            public string name;
+            public string description;
+            public float chance; // Chance to trigger
+            public float value;   // Effect value
         }
         
         private List<JobAbility> jobAbilities = new List<JobAbility>();
@@ -91,25 +140,87 @@ namespace GuildMaster
         public event Action<Unit, float> OnHealed;
         public event Action<Unit> OnDeath;
 
-        public Unit(string name, int level, JobClass jobClass, UnitRank rank = UnitRank.Common)
+        // Battle-related properties
+        public int awakenLevel => awakeningLevel;
+        public Vector2Int squadPosition;
+        public Transform transform; // GameObject의 transform 참조
+        public GameObject gameObject; // GameObject 참조 추가
+        
+        // 호환성을 위한 별칭들 (읽기 전용)
+        public float attack => attackPower; // 호환성을 위한 별칭
+        
+        // 수정 가능한 속성들 (BattleSimulationSystem 호환성)
+        public float AttackModifiable
         {
-            UnitId = Guid.NewGuid().ToString();
-            Name = name;
-            Level = level;
-            JobClass = jobClass;
-            Rank = rank;
-            Experience = 0;
-            ExperienceToNextLevel = CalculateExpToNextLevel();
-            JobMastery = 0f;
-            AwakeningLevel = 0;
+            get => attackPower;
+            set => attackPower = value;
+        }
+        
+        // 추가 호환성 속성들
+        public float critRate => criticalRate;
+        public float critDamage => criticalDamage;
+        
+        // Battle methods
+        public void ResetBattleState()
+        {
+            currentHP = maxHP;
+            currentMP = maxMP;
+            activeStatusEffects.Clear();
+        }
+        
+        public bool GetCriticalHit()
+        {
+            return UnityEngine.Random.value < criticalRate;
+        }
+        
+        public List<Skill> GetAvailableSkills()
+        {
+            // 간단한 구현 - 실제로는 스킬 시스템과 연동 필요
+            return new List<Skill>();
+        }
+        
+        public string GetJobIcon()
+        {
+            switch (jobClass)
+            {
+                case JobClass.Warrior: return "icon_warrior";
+                case JobClass.Knight: return "icon_knight";
+                case JobClass.Mage: return "icon_mage";
+                case JobClass.Priest: return "icon_priest";
+                case JobClass.Assassin: return "icon_assassin";
+                case JobClass.Ranger: return "icon_ranger";
+                case JobClass.Sage: return "icon_sage";
+                default: return "icon_default";
+            }
+        }
+
+        public Unit(string name, int level, JobClass jobClass, Rarity rank = Rarity.Common)
+        {
+            unitId = Guid.NewGuid().ToString();
+            unitName = name;
+            this.level = level;
+            this.jobClass = jobClass;
+            rarity = rank;
+            experience = 0;
+            experienceToNextLevel = CalculateExpToNextLevel();
+            jobMastery = 0f;
+            awakeningLevel = 0;
             
             InitializeStats();
             InitializeJobAbilities();
+            InitializeSkills();
+        }
+        
+        // 위치 설정 메서드 추가
+        public void SetPosition(int squadIndex, int row, int col)
+        {
+            currentSquad = squadIndex;
+            gridPosition = new Vector2Int(row, col);
         }
         
         int CalculateExpToNextLevel()
         {
-            return 100 * Level * (int)Mathf.Pow(1.2f, Level - 1);
+            return 100 * level * (int)Mathf.Pow(1.2f, level - 1);
         }
 
         void InitializeStats()
@@ -118,124 +229,295 @@ namespace GuildMaster
             float rankMultiplier = GetRankMultiplier();
             
             // Base stats by job class
-            switch (JobClass)
+            switch (jobClass)
             {
                 case JobClass.Warrior:
-                    MaxHealth = (100 + (Level * 20)) * rankMultiplier;
-                    MaxMana = (50 + (Level * 5)) * rankMultiplier;
-                    Attack = (15 + (Level * 3)) * rankMultiplier;
-                    Defense = (10 + (Level * 2)) * rankMultiplier;
-                    MagicPower = (5 + (Level * 0.5f)) * rankMultiplier;
-                    Speed = (8 + (Level * 1)) * rankMultiplier;
-                    CriticalRate = 0.15f + (Rank == UnitRank.Legendary ? 0.1f : 0f);
-                    CriticalDamage = 1.5f + (AwakeningLevel * 0.1f);
-                    Accuracy = 0.9f;
-                    Evasion = 0.05f;
+                    maxHP = (100 + (level * 20)) * rankMultiplier;
+                    maxMP = (50 + (level * 5)) * rankMultiplier;
+                    attackPower = (15 + (level * 3)) * rankMultiplier;
+                    defense = (10 + (level * 2)) * rankMultiplier;
+                    magicPower = (5 + (level * 0.5f)) * rankMultiplier;
+                    speed = (8 + (level * 1)) * rankMultiplier;
+                    criticalRate = 0.15f + (rarity == Rarity.Legendary ? 0.1f : 0f);
+                    criticalDamage = 1.5f + (awakeningLevel * 0.1f);
+                    accuracy = 0.9f;
+                    evasion = 0.05f;
                     break;
                     
                 case JobClass.Knight:
-                    MaxHealth = (120 + (Level * 25)) * rankMultiplier;
-                    MaxMana = (60 + (Level * 6)) * rankMultiplier;
-                    Attack = (12 + (Level * 2)) * rankMultiplier;
-                    Defense = (15 + (Level * 3)) * rankMultiplier;
-                    MagicPower = (8 + (Level * 1)) * rankMultiplier;
-                    Speed = (6 + (Level * 0.8f)) * rankMultiplier;
-                    CriticalRate = 0.1f;
-                    CriticalDamage = 1.4f + (AwakeningLevel * 0.08f);
-                    Accuracy = 0.85f;
-                    Evasion = 0.03f + (JobMastery * 0.001f);
+                    maxHP = (120 + (level * 25)) * rankMultiplier;
+                    maxMP = (60 + (level * 6)) * rankMultiplier;
+                    attackPower = (12 + (level * 2)) * rankMultiplier;
+                    defense = (15 + (level * 3)) * rankMultiplier;
+                    magicPower = (8 + (level * 1)) * rankMultiplier;
+                    speed = (6 + (level * 0.8f)) * rankMultiplier;
+                    criticalRate = 0.1f;
+                    criticalDamage = 1.4f + (awakeningLevel * 0.08f);
+                    accuracy = 0.85f;
+                    evasion = 0.03f + (jobMastery * 0.001f);
                     break;
                     
                 case JobClass.Mage:
-                    MaxHealth = (60 + (Level * 10)) * rankMultiplier;
-                    MaxMana = (100 + (Level * 15)) * rankMultiplier;
-                    Attack = (5 + (Level * 0.5f)) * rankMultiplier;
-                    Defense = (5 + (Level * 1)) * rankMultiplier;
-                    MagicPower = (20 + (Level * 4)) * rankMultiplier;
-                    Speed = (10 + (Level * 1.2f)) * rankMultiplier;
-                    CriticalRate = 0.2f + (JobMastery * 0.002f);
-                    CriticalDamage = 1.8f + (AwakeningLevel * 0.12f);
-                    Accuracy = 0.95f;
-                    Evasion = 0.08f;
+                    maxHP = (60 + (level * 10)) * rankMultiplier;
+                    maxMP = (100 + (level * 15)) * rankMultiplier;
+                    attackPower = (5 + (level * 0.5f)) * rankMultiplier;
+                    defense = (5 + (level * 1)) * rankMultiplier;
+                    magicPower = (20 + (level * 4)) * rankMultiplier;
+                    speed = (10 + (level * 1.2f)) * rankMultiplier;
+                    criticalRate = 0.2f + (jobMastery * 0.002f);
+                    criticalDamage = 1.8f + (awakeningLevel * 0.12f);
+                    accuracy = 0.95f;
+                    evasion = 0.08f;
                     break;
                     
                 case JobClass.Priest:
-                    MaxHealth = (70 + (Level * 12)) * rankMultiplier;
-                    MaxMana = (80 + (Level * 12)) * rankMultiplier;
-                    Attack = (8 + (Level * 1)) * rankMultiplier;
-                    Defense = (8 + (Level * 1.5f)) * rankMultiplier;
-                    MagicPower = (15 + (Level * 3)) * rankMultiplier;
-                    Speed = (9 + (Level * 1)) * rankMultiplier;
-                    CriticalRate = 0.05f;
-                    CriticalDamage = 1.3f;
-                    Accuracy = 0.9f;
-                    Evasion = 0.06f;
+                    maxHP = (70 + (level * 12)) * rankMultiplier;
+                    maxMP = (80 + (level * 12)) * rankMultiplier;
+                    attackPower = (8 + (level * 1)) * rankMultiplier;
+                    defense = (8 + (level * 1.5f)) * rankMultiplier;
+                    magicPower = (15 + (level * 3)) * rankMultiplier;
+                    speed = (9 + (level * 1)) * rankMultiplier;
+                    criticalRate = 0.05f;
+                    criticalDamage = 1.3f;
+                    accuracy = 0.9f;
+                    evasion = 0.06f;
                     break;
                     
                 case JobClass.Assassin:
-                    MaxHealth = (80 + (Level * 15)) * rankMultiplier;
-                    MaxMana = (60 + (Level * 8)) * rankMultiplier;
-                    Attack = (18 + (Level * 3.5f)) * rankMultiplier;
-                    Defense = (7 + (Level * 1.2f)) * rankMultiplier;
-                    MagicPower = (5 + (Level * 0.5f)) * rankMultiplier;
-                    Speed = (15 + (Level * 2)) * rankMultiplier;
-                    CriticalRate = 0.35f + (JobMastery * 0.003f);
-                    CriticalDamage = 2.0f + (AwakeningLevel * 0.15f);
-                    Accuracy = 0.95f;
-                    Evasion = 0.15f + (JobMastery * 0.002f);
+                    maxHP = (80 + (level * 15)) * rankMultiplier;
+                    maxMP = (60 + (level * 8)) * rankMultiplier;
+                    attackPower = (18 + (level * 3.5f)) * rankMultiplier;
+                    defense = (7 + (level * 1.2f)) * rankMultiplier;
+                    magicPower = (5 + (level * 0.5f)) * rankMultiplier;
+                    speed = (15 + (level * 2)) * rankMultiplier;
+                    criticalRate = 0.35f + (jobMastery * 0.003f);
+                    criticalDamage = 2.0f + (awakeningLevel * 0.15f);
+                    accuracy = 0.95f;
+                    evasion = 0.15f + (jobMastery * 0.002f);
                     break;
                     
                 case JobClass.Ranger:
-                    MaxHealth = (85 + (Level * 16)) * rankMultiplier;
-                    MaxMana = (70 + (Level * 9)) * rankMultiplier;
-                    Attack = (16 + (Level * 3.2f)) * rankMultiplier;
-                    Defense = (8 + (Level * 1.5f)) * rankMultiplier;
-                    MagicPower = (5 + (Level * 0.5f)) * rankMultiplier;
-                    Speed = (12 + (Level * 1.5f)) * rankMultiplier;
-                    CriticalRate = 0.25f + (JobMastery * 0.0025f);
-                    CriticalDamage = 1.7f + (AwakeningLevel * 0.1f);
-                    Accuracy = 0.98f;
-                    Evasion = 0.1f;
+                    maxHP = (85 + (level * 16)) * rankMultiplier;
+                    maxMP = (70 + (level * 9)) * rankMultiplier;
+                    attackPower = (16 + (level * 3.2f)) * rankMultiplier;
+                    defense = (8 + (level * 1.5f)) * rankMultiplier;
+                    magicPower = (5 + (level * 0.5f)) * rankMultiplier;
+                    speed = (12 + (level * 1.5f)) * rankMultiplier;
+                    criticalRate = 0.25f + (jobMastery * 0.0025f);
+                    criticalDamage = 1.7f + (awakeningLevel * 0.1f);
+                    accuracy = 0.98f;
+                    evasion = 0.1f;
                     break;
                     
                 case JobClass.Sage:
-                    MaxHealth = (90 + (Level * 18)) * rankMultiplier;
-                    MaxMana = (120 + (Level * 18)) * rankMultiplier;
-                    Attack = (12 + (Level * 2)) * rankMultiplier;
-                    Defense = (10 + (Level * 2)) * rankMultiplier;
-                    MagicPower = (18 + (Level * 3.5f)) * rankMultiplier;
-                    Speed = (11 + (Level * 1.3f)) * rankMultiplier;
-                    CriticalRate = 0.15f + (JobMastery * 0.0015f);
-                    CriticalDamage = 1.6f + (AwakeningLevel * 0.1f);
-                    Accuracy = 0.92f;
-                    Evasion = 0.07f;
+                    maxHP = (90 + (level * 18)) * rankMultiplier;
+                    maxMP = (120 + (level * 18)) * rankMultiplier;
+                    attackPower = (12 + (level * 2)) * rankMultiplier;
+                    defense = (10 + (level * 2)) * rankMultiplier;
+                    magicPower = (18 + (level * 3.5f)) * rankMultiplier;
+                    speed = (11 + (level * 1.3f)) * rankMultiplier;
+                    criticalRate = 0.15f + (jobMastery * 0.0015f);
+                    criticalDamage = 1.6f + (awakeningLevel * 0.1f);
+                    accuracy = 0.92f;
+                    evasion = 0.07f;
                     break;
             }
             
-            CurrentHealth = MaxHealth;
-            CurrentMana = MaxMana;
-            CurrentShield = 0;
-            MaxShield = MaxHealth * 0.3f;
+            currentHP = maxHP;
+            currentMP = maxMP;
+            currentShield = 0;
+            maxShield = maxHP * 0.3f;
         }
         
         float GetRankMultiplier()
         {
-            return Rank switch
+            return rarity switch
             {
-                UnitRank.Common => 1f,
-                UnitRank.Uncommon => 1.15f,
-                UnitRank.Rare => 1.3f,
-                UnitRank.Epic => 1.5f,
-                UnitRank.Legendary => 1.8f,
+                Rarity.Common => 1f,
+                Rarity.Uncommon => 1.15f,
+                Rarity.Rare => 1.3f,
+                Rarity.Epic => 1.5f,
+                Rarity.Legendary => 1.8f,
                 _ => 1f
             };
         }
 
-        public void SetPosition(int squadIndex, int row, int col)
+        void InitializeJobAbilities()
         {
-            SquadIndex = squadIndex;
-            Row = row;
-            Col = col;
+            jobAbilities.Clear();
+            
+            switch (jobClass)
+            {
+                case JobClass.Warrior:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Berserker's Rage",
+                        description = "Damage increases as HP decreases",
+                        chance = 1f,
+                        value = 0.5f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Counterattack",
+                        description = "Chance to counter when attacked",
+                        chance = 0.2f,
+                        value = 0.5f
+                    });
+                    break;
+                    
+                case JobClass.Knight:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Guardian's Shield",
+                        description = "Damage reduction when HP is low",
+                        chance = 1f,
+                        value = 0.3f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Cover",
+                        description = "Chance to protect nearby allies",
+                        chance = 0.3f,
+                        value = 1f
+                    });
+                    break;
+                    
+                case JobClass.Mage:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Elemental Mastery",
+                        description = "Chance for double magic damage",
+                        chance = 0.15f,
+                        value = 2f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Mana Surge",
+                        description = "MP regeneration on spell cast",
+                        chance = 0.3f,
+                        value = 0.1f
+                    });
+                    break;
+                    
+                case JobClass.Priest:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Divine Grace",
+                        description = "Healing spells have increased effect",
+                        chance = 1f,
+                        value = 0.3f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Sanctuary",
+                        description = "Chance to grant shield when healing",
+                        chance = 0.25f,
+                        value = 0.5f
+                    });
+                    break;
+                    
+                case JobClass.Assassin:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Shadow Strike",
+                        description = "Critical attacks ignore defense",
+                        chance = 1f,
+                        value = 1f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Evasion Master",
+                        description = "Dodge grants speed boost",
+                        chance = 1f,
+                        value = 0.2f
+                    });
+                    break;
+                    
+                case JobClass.Ranger:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Precision",
+                        description = "Attacks cannot miss",
+                        chance = 1f,
+                        value = 1f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Double Shot",
+                        description = "Chance to attack twice",
+                        chance = 0.2f,
+                        value = 1f
+                    });
+                    break;
+                    
+                case JobClass.Sage:
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Wisdom",
+                        description = "All abilities have reduced cooldown",
+                        chance = 1f,
+                        value = 0.2f
+                    });
+                    jobAbilities.Add(new JobAbility
+                    {
+                        name = "Enlightenment",
+                        description = "Chance to not consume MP",
+                        chance = 0.3f,
+                        value = 1f
+                    });
+                    break;
+            }
+        }
+
+        void InitializeSkills()
+        {
+            // Add basic skills based on job class - simplified without SkillSystem dependency
+            skillIds.Clear();
+            
+            switch (jobClass)
+            {
+                case JobClass.Warrior:
+                    skillIds.Add(1); // Basic Slash
+                    skillIds.Add(2); // Power Strike
+                    if (level >= 5) skillIds.Add(3); // Whirlwind
+                    break;
+                    
+                case JobClass.Knight:
+                    skillIds.Add(11); // Shield Bash
+                    skillIds.Add(12); // Taunt
+                    if (level >= 5) skillIds.Add(13); // Guardian
+                    break;
+                    
+                case JobClass.Mage:
+                    skillIds.Add(21); // Magic Missile
+                    skillIds.Add(22); // Fireball
+                    if (level >= 5) skillIds.Add(23); // Lightning Bolt
+                    break;
+                    
+                case JobClass.Priest:
+                    skillIds.Add(31); // Heal
+                    skillIds.Add(32); // Blessing
+                    if (level >= 5) skillIds.Add(33); // Divine Light
+                    break;
+                    
+                case JobClass.Assassin:
+                    skillIds.Add(41); // Sneak Attack
+                    skillIds.Add(42); // Poison Blade
+                    if (level >= 5) skillIds.Add(43); // Shadow Strike
+                    break;
+                    
+                case JobClass.Ranger:
+                    skillIds.Add(51); // Aimed Shot
+                    skillIds.Add(52); // Multi Shot
+                    if (level >= 5) skillIds.Add(53); // Eagle Eye
+                    break;
+                    
+                case JobClass.Sage:
+                    skillIds.Add(61); // Wisdom
+                    skillIds.Add(62); // Elemental Mastery
+                    if (level >= 5) skillIds.Add(63); // Time Stop
+                    break;
+            }
         }
 
         public float GetAttackDamage()
@@ -243,85 +525,77 @@ namespace GuildMaster
             float baseDamage;
             
             // Magic classes use magic power
-            if (JobClass == JobClass.Mage || JobClass == JobClass.Priest || JobClass == JobClass.Sage)
+            if (unitClass == Class.Wizard || unitClass == Class.Priest || unitClass == Class.Sage)
             {
-                baseDamage = MagicPower;
+                baseDamage = magicPower;
             }
             else
             {
-                baseDamage = Attack;
+                baseDamage = attackPower;
             }
             
-            // Apply critical hit
-            bool isCritical = UnityEngine.Random.value < CriticalRate;
-            if (isCritical)
+            // Critical hit check
+            if (UnityEngine.Random.value < criticalRate)
             {
-                baseDamage *= CriticalDamage;
+                baseDamage *= criticalDamage;
+                Debug.Log($"{unitName} scored a critical hit!");
             }
             
-            // Apply accuracy
-            if (UnityEngine.Random.value > Accuracy)
+            // Apply formation buff
+            baseDamage *= formationBuff;
+            
+            // Apply status effects
+            foreach (var effect in activeStatusEffects)
             {
-                return 0; // Miss
+                if (effect.Type == StatusEffectType.Regeneration)
+                {
+                    baseDamage *= (1f + effect.Value);
+                }
+                else if (effect.Type == StatusEffectType.Poison || effect.Type == StatusEffectType.Burn)
+                {
+                    baseDamage *= (1f - effect.Value);
+                }
             }
             
-            // Add some randomness (90% - 110%)
-            baseDamage *= UnityEngine.Random.Range(0.9f, 1.1f);
+            // Job specific damage modifiers
+            if (jobClass == JobClass.Warrior && currentHP < maxHP * 0.5f)
+            {
+                baseDamage *= 1.5f; // Berserker's Rage
+            }
             
             return baseDamage;
         }
 
-        public float GetHealPower()
+        public void TakeDamage(float damage, bool isMagical = false)
         {
-            float healPower = MagicPower * 0.8f;
-            
-            // Priests get healing bonus
-            if (JobClass == JobClass.Priest)
-            {
-                healPower *= 1.5f;
-            }
-            // Sages get smaller healing bonus
-            else if (JobClass == JobClass.Sage)
-            {
-                healPower *= 1.2f;
-            }
-            
-            // Add some randomness
-            healPower *= UnityEngine.Random.Range(0.9f, 1.1f);
-            
-            return healPower;
-        }
-
-        public void TakeDamage(float damage)
-        {
-            if (!IsAlive) return;
+            if (!isAlive) return;
             
             // Check evasion
-            if (UnityEngine.Random.value < Evasion)
+            if (UnityEngine.Random.value < evasion)
             {
-                OnDamageTaken?.Invoke(this, 0); // Evaded
+                Debug.Log($"{unitName} evaded the attack!");
                 return;
             }
             
-            // Apply defense
-            float actualDamage = damage - (Defense * 0.5f);
-            actualDamage = Mathf.Max(1, actualDamage); // Minimum 1 damage
+            // Calculate defense
+            float effectiveDef = isMagical ? effectiveMagicDefense : effectiveDefense;
+            float mitigatedDamage = damage * (100f / (100f + effectiveDef));
             
-            // Apply damage to shield first
-            if (CurrentShield > 0)
+            // Apply to shield first
+            if (currentShield > 0)
             {
-                float shieldDamage = Mathf.Min(CurrentShield, actualDamage);
-                CurrentShield -= shieldDamage;
-                actualDamage -= shieldDamage;
+                float shieldDamage = Mathf.Min(currentShield, mitigatedDamage);
+                currentShield -= shieldDamage;
+                mitigatedDamage -= shieldDamage;
             }
             
-            // Apply remaining damage to health
-            CurrentHealth -= actualDamage;
-            CurrentHealth = Mathf.Max(0, CurrentHealth);
+            // Apply remaining damage to HP
+            currentHP -= mitigatedDamage;
+            currentHP = Mathf.Max(0, currentHP);
             
-            OnDamageTaken?.Invoke(this, actualDamage);
+            OnDamageTaken?.Invoke(this, mitigatedDamage);
             
-            if (!IsAlive)
+            if (!isAlive)
             {
                 OnDeath?.Invoke(this);
             }
@@ -329,343 +603,193 @@ namespace GuildMaster
 
         public void Heal(float amount)
         {
-            if (!IsAlive) return;
+            if (!isAlive) return;
             
-            float actualHeal = Mathf.Min(amount, MaxHealth - CurrentHealth);
-            CurrentHealth += actualHeal;
+            float actualHeal = amount;
             
-            OnHealed?.Invoke(this, actualHeal);
-        }
-
-        public void Revive(float healthPercentage = 0.5f)
-        {
-            if (IsAlive) return;
-            
-            CurrentHealth = MaxHealth * healthPercentage;
-        }
-
-        public float GetHealthPercentage()
-        {
-            return CurrentHealth / MaxHealth;
-        }
-
-        public string GetJobIcon()
-        {
-            switch (JobClass)
+            // Apply healing power modifier
+            if (jobClass == JobClass.Priest)
             {
-                case JobClass.Warrior: return "⚔️";
-                case JobClass.Knight: return "🛡️";
-                case JobClass.Mage: return "🧙";
-                case JobClass.Priest: return "✨";
-                case JobClass.Assassin: return "🗡️";
-                case JobClass.Ranger: return "🏹";
-                case JobClass.Sage: return "📖";
-                default: return "❓";
+                actualHeal *= 1.3f; // Divine Grace
+            }
+            
+            float previousHP = currentHP;
+            currentHP = Mathf.Min(currentHP + actualHeal, maxHP);
+            float healedAmount = currentHP - previousHP;
+            
+            OnHealed?.Invoke(this, healedAmount);
+            
+            // Chance to grant shield (Priest ability)
+            if (jobClass == JobClass.Priest && UnityEngine.Random.value < 0.25f)
+            {
+                AddShield(healedAmount * 0.5f);
             }
         }
-        
+
         public void AddShield(float amount)
         {
-            CurrentShield = Mathf.Min(CurrentShield + amount, MaxShield);
+            currentShield = Mathf.Min(currentShield + amount, maxShield);
         }
-        
+
         public void RestoreMana(float amount)
         {
-            CurrentMana = Mathf.Min(CurrentMana + amount, MaxMana);
+            currentMP = Mathf.Min(currentMP + amount, maxMP);
         }
-        
-        public float GetManaPercentage()
+
+        public void AddExperience(int exp)
         {
-            return MaxMana > 0 ? CurrentMana / MaxMana : 0;
-        }
-        
-        // Job Abilities System
-        void InitializeJobAbilities()
-        {
-            jobAbilities.Clear();
+            experience += exp;
             
-            switch (JobClass)
+            while (experience >= experienceToNextLevel)
             {
-                case JobClass.Warrior:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "분노의 일격",
-                        Description = "체력이 50% 이하일 때 공격력 증가",
-                        Chance = 1f,
-                        Value = 0.3f + (JobMastery * 0.003f)
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "반격",
-                        Description = "피격 시 반격 확률",
-                        Chance = 0.15f + (JobMastery * 0.001f),
-                        Value = 0.5f
-                    });
-                    break;
-                    
-                case JobClass.Knight:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "수호자의 맹세",
-                        Description = "아군 보호 시 피해 감소",
-                        Chance = 0.3f + (JobMastery * 0.002f),
-                        Value = 0.5f
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "천상의 축복",
-                        Description = "매 턴 체력 회복",
-                        Chance = 0.2f,
-                        Value = MaxHealth * 0.02f
-                    });
-                    break;
-                    
-                case JobClass.Mage:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "원소 폭발",
-                        Description = "마법 공격 시 추가 피해",
-                        Chance = 0.25f + (JobMastery * 0.002f),
-                        Value = 0.4f
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "마나 흡수",
-                        Description = "킬 시 마나 회복",
-                        Chance = 0.3f,
-                        Value = 0.1f
-                    });
-                    break;
-                    
-                case JobClass.Priest:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "성스러운 광휘",
-                        Description = "힐링 효과 증폭",
-                        Chance = 1f,
-                        Value = 0.5f + (JobMastery * 0.005f)
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "기적",
-                        Description = "죽은 아군 부활 확률",
-                        Chance = 0.05f + (AwakeningLevel * 0.01f),
-                        Value = 0.3f
-                    });
-                    break;
-                    
-                case JobClass.Assassin:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "그림자 걸음",
-                        Description = "회피률 대폭 증가",
-                        Chance = 1f,
-                        Value = 0.5f
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "치명타",
-                        Description = "크리티컬 시 즉사 확률",
-                        Chance = 0.01f + (JobMastery * 0.0005f),
-                        Value = 1f
-                    });
-                    break;
-                    
-                case JobClass.Ranger:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "매의 눈",
-                        Description = "명중률 100%",
-                        Chance = 1f,
-                        Value = 1f
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "다중 사격",
-                        Description = "추가 대상 공격",
-                        Chance = 0.2f + (JobMastery * 0.001f),
-                        Value = 2f
-                    });
-                    break;
-                    
-                case JobClass.Sage:
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "지혜의 광휘",
-                        Description = "모든 능력치 상승",
-                        Chance = 1f,
-                        Value = 0.1f + (JobMastery * 0.001f)
-                    });
-                    jobAbilities.Add(new JobAbility
-                    {
-                        Name = "전능",
-                        Description = "물리/마법 복합 공격",
-                        Chance = 0.3f,
-                        Value = 1f
-                    });
-                    break;
+                LevelUp();
             }
         }
-        
-        // Combat calculations with job abilities
-        float CalculateAttackPower()
+
+        void LevelUp()
         {
-            float basePower = Attack;
-            
-            // Warrior rage bonus
-            if (JobClass == JobClass.Warrior && GetHealthPercentage() < 0.5f)
-            {
-                var rageAbility = jobAbilities.Find(a => a.Name == "분노의 일격");
-                if (rageAbility != null)
-                    basePower *= (1 + rageAbility.Value);
-            }
-            
-            // Sage wisdom bonus
-            if (JobClass == JobClass.Sage)
-            {
-                var wisdomAbility = jobAbilities.Find(a => a.Name == "지혜의 광휘");
-                if (wisdomAbility != null)
-                    basePower *= (1 + wisdomAbility.Value);
-            }
-            
-            return basePower;
-        }
-        
-        float CalculateMagicAttackPower()
-        {
-            float basePower = MagicPower;
-            
-            // Mage elemental explosion
-            if (JobClass == JobClass.Mage)
-            {
-                var explosionAbility = jobAbilities.Find(a => a.Name == "원소 폭발");
-                if (explosionAbility != null && UnityEngine.Random.value < explosionAbility.Chance)
-                    basePower *= (1 + explosionAbility.Value);
-            }
-            
-            // Sage wisdom bonus
-            if (JobClass == JobClass.Sage)
-            {
-                var wisdomAbility = jobAbilities.Find(a => a.Name == "지혜의 광휘");
-                if (wisdomAbility != null)
-                    basePower *= (1 + wisdomAbility.Value);
-            }
-            
-            return basePower;
-        }
-        
-        float CalculatePhysicalDefense()
-        {
-            float baseDefense = Defense;
-            
-            // Knight guardian's oath
-            if (JobClass == JobClass.Knight)
-            {
-                baseDefense *= 1.2f; // Passive 20% defense bonus
-            }
-            
-            return baseDefense;
-        }
-        
-        float CalculateMagicalDefense()
-        {
-            float baseDefense = Defense * 0.7f + MagicPower * 0.3f;
-            
-            // Priest holy protection
-            if (JobClass == JobClass.Priest)
-            {
-                baseDefense *= 1.15f;
-            }
-            
-            return baseDefense;
-        }
-        
-        float CalculateHealingPower()
-        {
-            float baseHeal = MagicPower * 0.8f;
-            
-            // Priest holy radiance
-            if (JobClass == JobClass.Priest)
-            {
-                var radianceAbility = jobAbilities.Find(a => a.Name == "성스러운 광휘");
-                if (radianceAbility != null)
-                    baseHeal *= (1 + radianceAbility.Value);
-            }
-            // Sage gets smaller healing bonus
-            else if (JobClass == JobClass.Sage)
-            {
-                baseHeal *= 1.2f;
-            }
-            
-            return baseHeal;
-        }
-        
-        // Level up and awakening
-        public bool CanLevelUp()
-        {
-            return Experience >= ExperienceToNextLevel;
-        }
-        
-        public void LevelUp()
-        {
-            if (!CanLevelUp()) return;
-            
-            Experience -= ExperienceToNextLevel;
-            Level++;
-            ExperienceToNextLevel = CalculateExpToNextLevel();
+            experience -= experienceToNextLevel;
+            level++;
+            experienceToNextLevel = CalculateExpToNextLevel();
             
             // Reinitialize stats with new level
             InitializeStats();
             
-            // Increase job mastery
-            JobMastery = Mathf.Min(100f, JobMastery + 2f);
-            
-            // Update abilities
-            InitializeJobAbilities();
+            Debug.Log($"{unitName} leveled up to {level}!");
         }
-        
-        public bool CanAwaken()
+
+        public void IncreaseJobMastery(float amount)
         {
-            return Level >= 50 && AwakeningLevel < 5;
+            jobMastery = Mathf.Min(jobMastery + amount, 100f);
         }
-        
+
         public void Awaken()
         {
-            if (!CanAwaken()) return;
-            
-            AwakeningLevel++;
-            
-            // Boost all stats
-            MaxHealth *= 1.1f;
-            MaxMana *= 1.1f;
-            Attack *= 1.1f;
-            Defense *= 1.1f;
-            MagicPower *= 1.1f;
-            Speed *= 1.1f;
-            
-            CurrentHealth = MaxHealth;
-            CurrentMana = MaxMana;
-            
-            // Update abilities
-            InitializeJobAbilities();
-        }
-        
-        public List<JobAbility> GetJobAbilities()
-        {
-            return new List<JobAbility>(jobAbilities);
-        }
-        
-        public string GetRankColor()
-        {
-            return Rank switch
+            if (awakeningLevel < 5)
             {
-                UnitRank.Common => "#FFFFFF",
-                UnitRank.Uncommon => "#00FF00",
-                UnitRank.Rare => "#0080FF",
-                UnitRank.Epic => "#B400FF",
-                UnitRank.Legendary => "#FF8000",
-                _ => "#FFFFFF"
-            };
+                awakeningLevel++;
+                InitializeStats(); // Recalculate stats with new awakening level
+                Debug.Log($"{unitName} awakened to level {awakeningLevel}!");
+            }
+        }
+
+        public int GetCombatPower()
+        {
+            float power = maxHP * 0.1f + attackPower * 2f + magicPower * 2f + 
+                         defense * 1.5f + speed * 1.2f;
+            power *= GetRankMultiplier();
+            power *= (1f + awakeningLevel * 0.1f);
+            return Mathf.RoundToInt(power);
+        }
+
+        // Status Effect Management
+        public void AddStatusEffect(StatusEffect effect)
+        {
+            // Check if immune
+            if (HasStatusEffect(StatusEffectType.Invulnerable))
+                return;
+                
+            activeStatusEffects.Add(effect);
+        }
+
+        public void RemoveAllDebuffs()
+        {
+            activeStatusEffects.RemoveAll(e => 
+                e.Type == StatusEffectType.Stun ||
+                e.Type == StatusEffectType.Silence ||
+                e.Type == StatusEffectType.Burn ||
+                e.Type == StatusEffectType.Poison ||
+                e.Type == StatusEffectType.Freeze ||
+                e.Type == StatusEffectType.Slow ||
+                e.Type == StatusEffectType.Bleed ||
+                e.Type == StatusEffectType.Blind
+            );
+        }
+
+        public bool HasStatusEffect(StatusEffectType type)
+        {
+            return activeStatusEffects.Any(effect => effect.Type == type);
+        }
+
+        public void UpdateStatusEffects()
+        {
+            for (int i = activeStatusEffects.Count - 1; i >= 0; i--)
+            {
+                var effect = activeStatusEffects[i];
+                
+                // Apply effect
+                switch (effect.Type)
+                {
+                    case StatusEffectType.Burn:
+                    case StatusEffectType.Poison:
+                    case StatusEffectType.Bleed:
+                        TakeDamage(effect.Value, true);
+                        break;
+                        
+                    case StatusEffectType.Regeneration:
+                        Heal(effect.Value);
+                        break;
+                }
+                
+                // Update duration
+                effect.RemainingDuration -= 1f;
+                if (effect.RemainingDuration <= 0)
+                {
+                    activeStatusEffects.RemoveAt(i);
+                }
+            }
+        }
+
+        // Calculated stats
+        float CalculateAttackPower()
+        {
+            return attackPower * formationBuff;
+        }
+
+        float CalculateMagicAttackPower()
+        {
+            return magicPower * formationBuff;
+        }
+
+        float CalculatePhysicalDefense()
+        {
+            float def = defense;
+            if (jobClass == JobClass.Knight && currentHP < maxHP * 0.3f)
+            {
+                def *= 1.3f; // Guardian's Shield
+            }
+            return def * formationBuff;
+        }
+
+        float CalculateMagicalDefense()
+        {
+            return defense * 0.8f * formationBuff;
+        }
+
+        float CalculateHealingPower()
+        {
+            float healing = magicPower;
+            if (jobClass == JobClass.Priest)
+            {
+                healing *= 1.3f; // Divine Grace
+            }
+            return healing * formationBuff;
+        }
+
+        // 추가 메서드들
+        public float GetHealthPercentage()
+        {
+            return maxHP > 0 ? currentHP / maxHP : 0f;
+        }
+        
+        public float GetManaPercentage()
+        {
+            return maxMP > 0 ? currentMP / maxMP : 0f;
+        }
+        
+        public float GetHealPower()
+        {
+            return effectiveHealingPower;
         }
     }
 }

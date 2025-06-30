@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle; // JobClass를 위해 추가
 
 namespace GuildMaster.NPC
 {

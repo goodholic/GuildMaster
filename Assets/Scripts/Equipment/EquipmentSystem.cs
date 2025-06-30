@@ -2,6 +2,8 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle; // Unit, JobClass를 위해 추가
+using GuildMaster.Core;   // ResourceType을 위해 추가
 
 namespace GuildMaster.Equipment
 {
@@ -615,33 +617,33 @@ namespace GuildMaster.Equipment
             switch (stat)
             {
                 case EquipmentStat.Attack:
-                    unit.Attack += value;
+                    unit.attackPower += value;
                     break;
                 case EquipmentStat.Defense:
-                    unit.Defense += value;
+                    unit.defense += value;
                     break;
                 case EquipmentStat.MagicPower:
-                    unit.MagicPower += value;
+                    unit.magicPower += value;
                     break;
                 case EquipmentStat.Health:
-                    unit.MaxHealth += value;
-                    if (value > 0) unit.CurrentHealth += value;
+                    unit.maxHP += value;
+                    if (value > 0) unit.currentHP += value;
                     break;
                 case EquipmentStat.Speed:
-                    unit.Speed += value;
+                    unit.speed += value;
                     break;
                 case EquipmentStat.CriticalRate:
-                    unit.CriticalRate += value;
+                    unit.criticalRate += value;
                     break;
                 case EquipmentStat.Accuracy:
-                    unit.Accuracy += value;
+                    unit.accuracy += value;
                     break;
                 case EquipmentStat.AllStats:
-                    unit.Attack *= (1f + value);
-                    unit.Defense *= (1f + value);
-                    unit.MagicPower *= (1f + value);
-                    unit.MaxHealth *= (1f + value);
-                    unit.Speed *= (1f + value);
+                    unit.attackPower *= (1f + value);
+                    unit.defense *= (1f + value);
+                    unit.magicPower *= (1f + value);
+                    unit.maxHP *= (1f + value);
+                    unit.speed *= (1f + value);
                     break;
             }
         }

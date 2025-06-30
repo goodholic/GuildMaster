@@ -2,6 +2,8 @@ using UnityEngine;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using GuildMaster.Data;
+using GuildMaster.Systems;
 
 namespace GuildMaster.Core
 {
@@ -42,6 +44,7 @@ namespace GuildMaster.Core
         public Equipment.EquipmentManager EquipmentManager { get; private set; }
         public Systems.ResearchManager ResearchManager { get; private set; }
         public Battle.SkillManager SkillManager { get; private set; }
+        // public GuildMaster.Systems.AnalyticsSystem AnalyticsSystem { get; private set; }
 
         // Game States
         public enum GameState
@@ -97,6 +100,7 @@ namespace GuildMaster.Core
             DontDestroyOnLoad(gameObject);
             
             InitializeSystems();
+            InitializeConvenienceSystems();
         }
 
         void InitializeSystems()
@@ -118,8 +122,19 @@ namespace GuildMaster.Core
             EquipmentManager = GetOrAddComponent<Equipment.EquipmentManager>();
             ResearchManager = GetOrAddComponent<Systems.ResearchManager>();
             SkillManager = GetOrAddComponent<Battle.SkillManager>();
+            // AnalyticsSystem = GetOrAddComponent<GuildMaster.Systems.AnalyticsSystem>();
 
             StartCoroutine(InitializeGameCoroutine());
+        }
+        
+        void InitializeConvenienceSystems()
+        {
+            // 편의 기능 시스템들 초기화
+            GetOrAddComponent<Systems.GameSpeedSystem>();
+            GetOrAddComponent<Systems.AutoBattleSystem>();
+            GetOrAddComponent<Systems.ConvenienceSystem>();
+            GetOrAddComponent<Systems.GachaSystem>();
+            GetOrAddComponent<Systems.AdventurerGrowthSystem>();
         }
 
         IEnumerator InitializeGameCoroutine()
@@ -127,7 +142,7 @@ namespace GuildMaster.Core
             CurrentState = GameState.Loading;
             
             // Load saved data
-            yield return SaveManager.LoadGame();
+            SaveManager.LoadGame(0);
             
             // Initialize guild
             yield return GuildManager.Initialize();
@@ -168,7 +183,7 @@ namespace GuildMaster.Core
         {
             if (pauseStatus)
             {
-                SaveManager?.SaveGame();
+                SaveManager?.SaveGame(0);
             }
         }
 
@@ -176,7 +191,7 @@ namespace GuildMaster.Core
         {
             if (!hasFocus)
             {
-                SaveManager?.SaveGame();
+                SaveManager?.SaveGame(0);
             }
         }
 
@@ -186,6 +201,55 @@ namespace GuildMaster.Core
             {
                 _instance = null;
             }
+        }
+
+        public void StartNewGame()
+        {
+            Debug.Log("Starting new game...");
+            // 새 게임 초기화 로직
+            InitializeNewGame();
+        }
+
+        public void LoadGame(int slotIndex)
+        {
+            Debug.Log($"Loading game from slot {slotIndex}...");
+            // 게임 로드 로직
+            var saveData = SaveManager.Instance.LoadGame(slotIndex);
+            if (saveData != null)
+            {
+                LoadGameData(saveData);
+            }
+        }
+
+        private void InitializeNewGame()
+        {
+            // 새 게임 초기화
+            if (GuildManager != null)
+            {
+                GuildManager.Initialize();
+            }
+            if (ResourceManager != null)
+            {
+                StartCoroutine(ResourceManager.Initialize());
+            }
+        }
+
+        private void LoadGameData(SaveData saveData)
+        {
+            // 저장된 데이터로 게임 상태 복원
+            if (ResourceManager != null)
+            {
+                ResourceManager.GetResources().Gold = saveData.gold;
+                ResourceManager.GetResources().Wood = saveData.wood;
+                ResourceManager.GetResources().Stone = saveData.stone;
+                ResourceManager.GetResources().ManaStone = saveData.manaStone;
+            }
+        }
+
+        void Start()
+        {
+            // Start 메서드는 이전에 있었던 초기화 로직을 포함하고 있습니다.
+            // 이전 초기화 로직을 유지하면서 새로운 초기화 로직을 추가할 수 있습니다.
         }
     }
 }

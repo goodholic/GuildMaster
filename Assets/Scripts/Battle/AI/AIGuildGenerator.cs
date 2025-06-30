@@ -1,6 +1,7 @@
 using UnityEngine;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Core;  // ResourceType, Building, BattleManager 등을 위해
 
 namespace GuildMaster.Battle
 {
@@ -231,19 +232,19 @@ namespace GuildMaster.Battle
             // Apply AI stat bonuses based on level
             float statMultiplier = 1f + (level * 0.05f); // 5% stat increase per level
             
-            unit.MaxHealth *= statMultiplier;
-            unit.CurrentHealth = unit.MaxHealth;
-            unit.Attack *= statMultiplier;
-            unit.Defense *= statMultiplier;
-            unit.MagicPower *= statMultiplier;
-            unit.Speed *= statMultiplier;
+            unit.maxHP *= statMultiplier;
+            unit.currentHP = unit.maxHP;
+            unit.attackPower *= statMultiplier;
+            unit.defense *= statMultiplier;
+            unit.magicPower *= statMultiplier;
+            unit.speed *= statMultiplier;
             
             // Add some randomness to make units unique
-            unit.MaxHealth *= Random.Range(0.9f, 1.1f);
-            unit.Attack *= Random.Range(0.9f, 1.1f);
-            unit.Defense *= Random.Range(0.9f, 1.1f);
-            unit.MagicPower *= Random.Range(0.9f, 1.1f);
-            unit.Speed *= Random.Range(0.9f, 1.1f);
+            unit.maxHP *= Random.Range(0.9f, 1.1f);
+            unit.attackPower *= Random.Range(0.9f, 1.1f);
+            unit.defense *= Random.Range(0.9f, 1.1f);
+            unit.magicPower *= Random.Range(0.9f, 1.1f);
+            unit.speed *= Random.Range(0.9f, 1.1f);
             
             return unit;
         }

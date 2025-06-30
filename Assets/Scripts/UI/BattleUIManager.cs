@@ -1,14 +1,15 @@
 using UnityEngine;
 using UnityEngine.UI;
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using TMPro;
+using GuildMaster.Battle;
 
 namespace GuildMaster.UI
 {
     using GuildMaster.Core;
-    using GuildMaster.Battle;
     
     public class BattleUIManager : MonoBehaviour
     {

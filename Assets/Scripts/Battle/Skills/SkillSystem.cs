@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Data;
 
 namespace GuildMaster.Battle
 {
@@ -9,7 +10,17 @@ namespace GuildMaster.Battle
     {
         Active,         // 능동 스킬
         Passive,        // 패시브 스킬
-        Ultimate        // 궁극기
+        Ultimate,       // 궁극기
+        Damage,         // 피해 스킬 (BattleAnimationSystem 호환성)
+        Heal,           // 치유 스킬 (BattleAnimationSystem 호환성)
+        Buff,           // 버프 스킬 (BattleAnimationSystem 호환성)
+        Debuff,         // 디버프 스킬 (BattleAnimationSystem 호환성)
+        Physical,       // 물리 스킬
+        Magical,        // 마법 스킬
+        Healing,        // 치유
+        Utility,        // 유틸리티
+        Defensive,      // 방어형
+        Summon          // 소환
     }
     
     public enum SkillTargetType
@@ -51,13 +62,13 @@ namespace GuildMaster.Battle
         Invulnerable    // 무적
     }
     
-    [System.Serializable]
     public class Skill
     {
         public string SkillId { get; set; }
         public string Name { get; set; }
         public string Description { get; set; }
         public SkillType Type { get; set; }
+        public SkillType skillType => Type; // 호환성을 위한 속성
         public JobClass RequiredClass { get; set; }
         public int RequiredLevel { get; set; }
         
@@ -147,9 +158,34 @@ namespace GuildMaster.Battle
             float levelBonus = CurrentLevel * LevelScaling;
             return (baseValue + scaling) * (1f + levelBonus) * PowerScaling;
         }
+        
+        public int GetManaCost()
+        {
+            return ManaCost;
+        }
+        
+        public SkillData GetSkillData()
+        {
+            return new SkillData
+            {
+                id = SkillId,
+                name = Name,
+                description = Description,
+                skillType = (GuildMaster.Data.SkillType)Type,
+                manaCost = ManaCost
+            };
+        }
+        
+        public void StartCooldown()
+        {
+            CurrentCooldown = CooldownTime;
+            if (UsesPerBattle > 0)
+            {
+                UsesRemaining--;
+            }
+        }
     }
     
-    [System.Serializable]
     public class SkillEffect
     {
         public SkillEffectType Type { get; set; }
@@ -168,7 +204,6 @@ namespace GuildMaster.Battle
         }
     }
     
-    [System.Serializable]
     public class StatusEffect
     {
         public string EffectId { get; set; }
@@ -551,8 +586,8 @@ namespace GuildMaster.Battle
             if (!skill.CanUse(caster)) return false;
             
             // Consume resources
-            caster.CurrentMana -= skill.ManaCost;
-            caster.CurrentHealth -= skill.HealthCost;
+            caster.currentMP -= skill.ManaCost;
+            caster.currentHP -= skill.HealthCost;
             
             // Set cooldown
             skill.CurrentCooldown = skill.CooldownTime;
@@ -623,16 +658,16 @@ namespace GuildMaster.Battle
         {
             // TODO: Implement buff system
             // For now, directly modify stats
-            target.Attack *= (1f + value);
-            target.Defense *= (1f + value);
+            target.attackPower *= (1f + value);
+            target.defense *= (1f + value);
         }
         
         void ApplyDebuff(Unit target, SkillEffect effect, float value)
         {
             // TODO: Implement debuff system
             // For now, directly modify stats
-            target.Attack *= (1f - value);
-            target.Defense *= (1f - value);
+            target.attackPower *= (1f - value);
+            target.defense *= (1f - value);
         }
         
         void ApplyStatusEffect(Unit target, StatusEffectType type, float duration, float value, Unit source, Skill sourceSkill)

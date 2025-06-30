@@ -2,6 +2,7 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle; // Unit, JobClass를 위해 추가
 
 namespace GuildMaster.Guild
 {
@@ -113,16 +114,16 @@ namespace GuildMaster.Guild
         {
             float rarityMultiplier = 1f + ((int)Rarity - 1) * 0.1f; // 10% per rarity level
             
-            MaxHealth *= rarityMultiplier;
-            CurrentHealth = MaxHealth;
-            Attack *= rarityMultiplier;
-            Defense *= rarityMultiplier;
-            MagicPower *= rarityMultiplier;
-            Speed *= rarityMultiplier;
+            maxHP *= rarityMultiplier;
+            currentHP = maxHP;
+            attackPower *= rarityMultiplier;
+            defense *= rarityMultiplier;
+            magicPower *= rarityMultiplier;
+            speed *= rarityMultiplier;
             
             // Higher rarity = better crit and accuracy
-            CriticalRate += (int)Rarity * 0.02f;
-            Accuracy += (int)Rarity * 0.01f;
+            criticalRate += (int)Rarity * 0.02f;
+            accuracy += (int)Rarity * 0.01f;
         }
         
         void CalculateExperienceRequirement()
@@ -151,7 +152,7 @@ namespace GuildMaster.Guild
         void LevelUp()
         {
             Experience -= ExperienceToNextLevel;
-            Level++;
+            level++;
             
             // Stat growth based on potential
             float growthRate = Potential / 100f;
@@ -196,12 +197,12 @@ namespace GuildMaster.Guild
             }
             
             // Apply growth
-            MaxHealth += healthGrowth;
-            CurrentHealth = MaxHealth; // Full heal on level up
-            Attack += attackGrowth;
-            Defense += defenseGrowth;
-            MagicPower += magicGrowth;
-            Speed += speedGrowth;
+            maxHP += healthGrowth;
+            currentHP = maxHP; // Full heal on level up
+            attackPower += attackGrowth;
+            defense += defenseGrowth;
+            magicPower += magicGrowth;
+            speed += speedGrowth;
             
             // Gain skill point every 5 levels
             if (Level % 5 == 0)
@@ -228,12 +229,12 @@ namespace GuildMaster.Guild
             
             // Stat bonus for star upgrade
             float starBonus = 0.1f; // 10% per star
-            MaxHealth *= (1f + starBonus);
-            CurrentHealth = MaxHealth;
-            Attack *= (1f + starBonus);
-            Defense *= (1f + starBonus);
-            MagicPower *= (1f + starBonus);
-            Speed *= (1f + starBonus);
+            maxHP *= (1f + starBonus);
+            currentHP = maxHP;
+            attackPower *= (1f + starBonus);
+            defense *= (1f + starBonus);
+            magicPower *= (1f + starBonus);
+            speed *= (1f + starBonus);
             
             // Increase potential
             Potential = Mathf.Min(100, Potential + 5);

@@ -1,0 +1,61 @@
+itemId,itemName,description,itemType,rarity,value,stackable,sellPrice,effectType,effectValue,requirements
+item_001,나무 검,평범한 나무로 만든 검,Weapon,Common,50,false,25,AttackBonus,5,Level 1
+item_002,철 검,단단한 철로 만든 검,Weapon,Common,150,false,75,AttackBonus,10,Level 3
+item_003,강철 검,고급 강철로 제작한 검,Weapon,Uncommon,500,false,250,AttackBonus,20,Level 5
+item_004,미스릴 검,마법의 금속 미스릴로 만든 검,Weapon,Rare,2000,false,1000,AttackBonus,40,Level 10
+item_005,천사의 검,천상의 힘이 깃든 성검,Weapon,Epic,8000,false,4000,AttackBonus,80,Level 15
+item_006,용살자의 검,용을 베는 전설의 검,Weapon,Legendary,20000,false,10000,AttackBonus,150,Level 20
+item_007,나무 갑옷,가벼운 나무 갑옷,Armor,Common,60,false,30,DefenseBonus,5,Level 1
+item_008,가죽 갑옷,질긴 가죽으로 만든 갑옷,Armor,Common,120,false,60,DefenseBonus,8,Level 2
+item_009,철 갑옷,무거운 철제 갑옷,Armor,Common,300,false,150,DefenseBonus,15,Level 4
+item_010,강철 갑옷,견고한 강철 갑옷,Armor,Uncommon,800,false,400,DefenseBonus,25,Level 6
+item_011,미스릴 갑옷,가볍고 강한 미스릴 갑옷,Armor,Rare,3000,false,1500,DefenseBonus,50,Level 10
+item_012,드래곤 스케일 갑옷,용의 비늘로 만든 갑옷,Armor,Epic,12000,false,6000,DefenseBonus,100,Level 15
+item_013,천상의 갑옷,신의 가호가 깃든 갑옷,Armor,Legendary,30000,false,15000,DefenseBonus,200,Level 20
+item_014,초급 치유 물약,체력을 50 회복시킨다,Consumable,Common,30,true,15,Heal,50,None
+item_015,중급 치유 물약,체력을 150 회복시킨다,Consumable,Uncommon,100,true,50,Heal,150,None
+item_016,고급 치유 물약,체력을 300 회복시킨다,Consumable,Rare,300,true,150,Heal,300,None
+item_017,최고급 치유 물약,체력을 500 회복시킨다,Consumable,Epic,800,true,400,Heal,500,None
+item_018,만병통치약,체력을 완전히 회복시킨다,Consumable,Legendary,2000,true,1000,FullHeal,100,None
+item_019,마나 물약,마나를 30 회복시킨다,Consumable,Common,40,true,20,ManaRestore,30,None
+item_020,고급 마나 물약,마나를 100 회복시킨다,Consumable,Rare,200,true,100,ManaRestore,100,None
+item_021,힘의 반지,공격력을 증가시킨다,Accessory,Uncommon,600,false,300,AttackBonus,15,Level 5
+item_022,지혜의 반지,마법력을 증가시킨다,Accessory,Uncommon,600,false,300,MagicBonus,15,Level 5
+item_023,민첩의 반지,속도를 증가시킨다,Accessory,Uncommon,600,false,300,SpeedBonus,10,Level 5
+item_024,생명의 목걸이,최대 체력을 증가시킨다,Accessory,Rare,1500,false,750,HPBonus,100,Level 8
+item_025,마나의 목걸이,최대 마나를 증가시킨다,Accessory,Rare,1500,false,750,MPBonus,50,Level 8
+item_026,용기의 부적,모든 능력치를 증가시킨다,Accessory,Epic,5000,false,2500,AllStats,20,Level 12
+item_027,불사조의 깃털,전투 중 한 번 부활한다,Accessory,Legendary,15000,false,7500,Resurrect,1,Level 18
+item_028,기본 스킬북,기본 공격 스킬을 배운다,SkillBook,Common,200,false,100,LearnSkill,skill_001,Level 1
+item_029,화염구 스킬북,화염구 마법을 배운다,SkillBook,Uncommon,800,false,400,LearnSkill,skill_025,Level 5
+item_030,치유술 스킬북,치유술을 배운다,SkillBook,Uncommon,1000,false,500,LearnSkill,skill_033,Level 3
+item_031,방어 자세 스킬북,방어 자세를 배운다,SkillBook,Common,500,false,250,LearnSkill,skill_002,Level 2
+item_032,메테오 스킬북,메테오 마법을 배운다,SkillBook,Legendary,10000,false,5000,LearnSkill,skill_032,Level 15
+item_033,나무,건설에 필요한 기본 재료,Material,Common,5,true,2,None,0,None
+item_034,돌,건설에 필요한 기본 재료,Material,Common,5,true,2,None,0,None
+item_035,철광석,장비 제작에 필요한 재료,Material,Common,20,true,10,None,0,None
+item_036,마나석,마법 아이템 제작 재료,Material,Uncommon,100,true,50,None,0,None
+item_037,미스릴 광석,고급 장비 제작 재료,Material,Rare,500,true,250,None,0,None
+item_038,용의 심장,전설 장비 제작 재료,Material,Legendary,5000,true,2500,None,0,None
+item_039,경험치 부스터,1시간 동안 경험치 2배,Consumable,Rare,1000,true,500,ExpBoost,100,None
+item_040,행운의 부적,1시간 동안 아이템 드롭률 증가,Consumable,Rare,1200,true,600,LuckBoost,50,None
+item_041,길드 깃발,길드 명성을 증가시킨다,Special,Epic,3000,false,1500,ReputationBonus,100,GuildLevel 5
+item_042,고대의 지도,숨겨진 던전을 발견할 수 있다,Special,Rare,2000,false,1000,UnlockDungeon,1,None
+item_043,영웅의 증표,전설의 모험가를 영입할 수 있다,Special,Legendary,8000,false,4000,RecruitHero,1,GuildLevel 10
+item_044,시간의 모래,건설 시간을 즉시 완료한다,Consumable,Uncommon,500,true,250,InstantBuild,1,None
+item_045,부활의 돌,쓰러진 모험가를 부활시킨다,Consumable,Epic,2000,true,1000,Revive,1,None
+item_046,강화의 망치,장비를 강화한다,Tool,Uncommon,800,true,400,Enhancement,1,None
+item_047,정화의 물약,모든 디버프를 제거한다,Consumable,Uncommon,300,true,150,Cleanse,1,None
+item_048,투명 망토,던전에서 몬스터를 회피할 수 있다,Equipment,Rare,1800,false,900,Stealth,30,Level 7
+item_049,순간이동 주문서,길드로 즉시 귀환한다,Consumable,Common,100,true,50,Teleport,1,None
+item_050,고대의 룬,스킬 쿨다운을 감소시킨다,Accessory,Epic,4000,false,2000,CooldownReduction,20,Level 12
+item_051,바람의 부츠,이동 속도를 증가시킨다,Equipment,Uncommon,700,false,350,SpeedBonus,15,Level 4
+item_052,거인의 벨트,최대 체력을 크게 증가시킨다,Equipment,Rare,2200,false,1100,HPBonus,200,Level 10
+item_053,현자의 지팡이,마법 공격력을 증가시킨다,Weapon,Rare,2500,false,1250,MagicBonus,50,Level 8
+item_054,암살자의 단검,크리티컬 확률을 증가시킨다,Weapon,Rare,2000,false,1000,CritBonus,25,Level 7
+item_055,성기사의 방패,방어력과 신성 저항을 증가시킨다,Shield,Epic,3500,false,1750,DefenseBonus,60,Level 12
+item_056,마법사의 로브,마나 재생을 증가시킨다,Armor,Uncommon,900,false,450,ManaRegen,5,Level 5
+item_057,사냥꾼의 활,원거리 공격력을 증가시킨다,Weapon,Uncommon,1200,false,600,RangedBonus,25,Level 6
+item_058,전사의 투구,물리 방어력을 증가시킨다,Helmet,Common,400,false,200,DefenseBonus,10,Level 3
+item_059,도적의 장갑,회피율을 증가시킨다,Gloves,Uncommon,800,false,400,EvasionBonus,15,Level 5
+item_060,마력의 구슬,스킬 데미지를 증가시킨다,Accessory,Rare,2800,false,1400,SkillDamage,30,Level 9

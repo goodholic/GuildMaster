@@ -3,11 +3,25 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle; // Unit, JobClass를 위해 추가
+using GuildMaster.Guild; // Building 클래스를 위해 추가
 
 namespace GuildMaster.Core
 {
     public class GuildManager : MonoBehaviour
     {
+        private static GuildManager _instance;
+        public static GuildManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<GuildManager>();
+                }
+                return _instance;
+            }
+        }
         // Guild Data
         public class GuildData
         {
@@ -253,6 +267,7 @@ namespace GuildMaster.Core
         public event Action<Unit> OnAdventurerRecruited;
         public event Action<int> OnGuildLevelUp;
         public event Action<int> OnReputationChanged;
+        public event Action<Unit> OnAdventurerRemoved;
 
         // Building Queue
         private Queue<BuildingTask> buildingQueue = new Queue<BuildingTask>();
@@ -270,6 +285,16 @@ namespace GuildMaster.Core
 
         void Awake()
         {
+            if (_instance == null)
+            {
+                _instance = this;
+            }
+            else if (_instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            
             currentGuild = new GuildData();
         }
 
@@ -277,7 +302,7 @@ namespace GuildMaster.Core
         {
             // Create initial guild hall
             Building guildHall = new Building(BuildingType.GuildHall, new Vector2Int(5, 5));
-            PlaceBuilding(guildHall);
+            PlaceBuilding(BuildingType.GuildHall, new Vector2Int(5, 5));
             
             // Create initial adventurers
             CreateInitialAdventurers();
@@ -297,7 +322,7 @@ namespace GuildMaster.Core
             for (int i = 0; i < startingClasses.Length; i++)
             {
                 Unit adventurer = new Unit($"Adventurer {i + 1}", 1, startingClasses[i]);
-                adventurer.IsPlayerUnit = true;
+                adventurer.isPlayerUnit = true;
                 RecruitAdventurer(adventurer);
             }
         }
@@ -538,26 +563,34 @@ namespace GuildMaster.Core
             }
         }
 
-        void PlaceBuilding(Building building)
+        public void PlaceBuilding(BuildingType type, Vector2Int position)
         {
-            // Place building on grid (considering size)
-            for (int x = 0; x < building.Size.x; x++)
-            {
-                for (int y = 0; y < building.Size.y; y++)
-                {
-                    guildGrid[building.Position.x + x, building.Position.y + y] = building;
-                }
-            }
-            
-            currentGuild.Buildings.Add(building);
-            
-            // Apply building effects
-            ApplyBuildingEffects(building);
-            
-            // Check for synergies
-            UpdateBuildingSynergies();
+            ConstructBuilding(type, position);
         }
         
+        // Building 오버로드 추가
+        public void PlaceBuilding(GuildMaster.Guild.Building building)
+        {
+            building.GridPosition = building.GridPosition;
+            PlaceBuilding(building.transform.position, building);
+        }
+        
+        void PlaceBuilding(Vector3 position, GuildMaster.Guild.Building guildBuilding)
+        {
+            guildBuilding.transform.position = position;
+            guildBuilding.IsPlaced = true;
+            currentGuild.Buildings.Add(ConvertToGuildManagerBuilding(guildBuilding));
+        }
+        
+        private Building ConvertToGuildManagerBuilding(GuildMaster.Guild.Building guildBuilding)
+        {
+            return new Building(guildBuilding.Type, guildBuilding.GridPosition)
+            {
+                Level = guildBuilding.Level,
+                IsConstructing = guildBuilding.IsConstructing
+            };
+        }
+
         void UpdateBuildingSynergies()
         {
             // Clear existing synergies
@@ -656,7 +689,7 @@ namespace GuildMaster.Core
             else
             {
                 Building newBuilding = new Building(task.Type, task.Position);
-                PlaceBuilding(newBuilding);
+                PlaceBuilding(task.Type, task.Position);
                 OnBuildingConstructed?.Invoke(newBuilding);
             }
         }
@@ -797,5 +830,139 @@ namespace GuildMaster.Core
             
             return production;
         }
+        
+        // Save/Load helper methods
+        public void ClearAllBuildings()
+        {
+            currentGuild.Buildings.Clear();
+            for (int x = 0; x < GUILD_GRID_SIZE; x++)
+            {
+                for (int y = 0; y < GUILD_GRID_SIZE; y++)
+                {
+                    guildGrid[x, y] = null;
+                }
+            }
+            Debug.Log("Cleared all buildings");
+        }
+        
+        public void ClearAllAdventurers()
+        {
+            currentGuild.Adventurers.Clear();
+            Debug.Log("Cleared all adventurers");
+        }
+        
+        public Building GetBuildingAt(Vector2Int position)
+        {
+            return currentGuild.Buildings.FirstOrDefault(b => b.Position == position);
+        }
+        
+        public void SetGuildLevel(int level)
+        {
+            currentGuild.GuildLevel = level;
+        }
+        
+        public void SetGuildReputation(int reputation)
+        {
+            currentGuild.GuildReputation = reputation;
+        }
+        
+        public void AddAdventurer(GuildMaster.Battle.Unit unit)
+        {
+            if (currentGuild.Adventurers.Count < currentGuild.MaxAdventurers)
+            {
+                currentGuild.Adventurers.Add(unit);
+                OnAdventurerRecruited?.Invoke(unit);
+                Debug.Log($"Added adventurer: {unit.unitName}");
+            }
+        }
+
+        public bool RemoveAdventurer(GuildMaster.Battle.Unit unit)
+        {
+            bool removed = currentGuild.Adventurers.Remove(unit);
+            if (removed)
+            {
+                Debug.Log($"Removed adventurer: {unit.unitName}");
+            }
+            return removed;
+        }
+        
+        public void IncreaseMaxAdventurers(int amount)
+        {
+            currentGuild.MaxAdventurers += amount;
+        }
+        
+        // 길드 정보 접근 메서드들 추가
+        public string GetGuildName()
+        {
+            return currentGuild.GuildName;
+        }
+        
+        public int GetGuildLevel() => currentGuild.GuildLevel;
+        
+        public int GetBuildingLevel(BuildingType buildingType)
+        {
+            var building = GetBuildingsByType(buildingType).FirstOrDefault();
+            return building?.Level ?? 0;
+        }
+        
+        public string GetGuildId()
+        {
+            return $"guild_{currentGuild.GuildName.GetHashCode()}";
+        }
+        
+        public void AddGuildExperience(int experience)
+        {
+            totalExperience += experience;
+            
+            int newLevel = CalculateGuildLevel(totalExperience);
+            if (newLevel > currentGuild.GuildLevel)
+            {
+                currentGuild.GuildLevel = newLevel;
+                ProcessGuildLevelUp();
+                OnGuildLevelChanged?.Invoke(newLevel);
+            }
+        }
+
+        public void UpdateGuildLevel()
+        {
+            // 총 경험치에 따른 레벨 계산
+            int newLevel = CalculateGuildLevel(totalExperience);
+            
+            if (newLevel > currentGuild.GuildLevel)
+            {
+                int levelsGained = newLevel - currentGuild.GuildLevel;
+                currentGuild.GuildLevel = newLevel;
+                
+                // 레벨업 보상
+                for (int i = 0; i < levelsGained; i++)
+                {
+                    ProcessGuildLevelUp();
+                }
+                
+                OnGuildLevelUp?.Invoke(currentGuild.GuildLevel);
+            }
+        }
+
+        private int CalculateGuildLevel(int experience)
+        {
+            // 경험치에 따른 레벨 계산
+            return Mathf.FloorToInt(experience / 1000f) + 1;
+        }
+
+        private void ProcessGuildLevelUp()
+        {
+            // 길드 레벨업 처리
+            Debug.Log($"Guild leveled up to {currentGuild.GuildLevel}!");
+        }
+
+        public void ApplyBuildingStats(GuildMaster.Guild.BuildingStats stats)
+        {
+            // 건물 스탯을 길드에 적용
+            Debug.Log($"Applying building stats: maxAdventurers={stats.maxAdventurers}, goldProduction={stats.goldProduction}");
+        }
+
+        // 길드 레벨 관련 메서드들
+        private int totalExperience = 0;
+        public event System.Action<int> OnGuildLevelChanged;
     }
 }

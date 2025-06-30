@@ -2,6 +2,8 @@ using UnityEngine;
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle;
+using GuildMaster.Core;
 
 namespace GuildMaster.Exploration
 {
@@ -12,7 +14,8 @@ namespace GuildMaster.Exploration
         Ancient,        // 고대 유적
         Infinite,       // 무한 심연
         Event,          // 이벤트 던전
-        Daily           // 일일 던전
+        Daily,          // 일일 던전
+        Cursed          // 저주받은 던전
     }
     
     public enum DungeonTheme
@@ -273,17 +276,18 @@ namespace GuildMaster.Exploration
             {
                 foreach (var unit in squad.GetAllUnits())
                 {
-                    unit.MaxHealth *= difficultyMultiplier;
-                    unit.CurrentHealth = unit.MaxHealth;
-                    unit.Attack *= difficultyMultiplier;
-                    unit.Defense *= difficultyMultiplier;
-                    unit.MagicPower *= difficultyMultiplier;
+                    unit.maxHP *= difficultyMultiplier;
+                    unit.currentHP = unit.maxHP;
+                    unit.attackPower *= difficultyMultiplier;
+                    unit.defense *= difficultyMultiplier;
+                    unit.magicPower *= difficultyMultiplier;
                     
                     if (HasBoss && squad.Index == 0) // First squad has boss
                     {
-                        unit.MaxHealth *= 2f;
-                        unit.CurrentHealth = unit.MaxHealth;
-                        unit.Name = "Boss " + unit.Name;
+                        unit.maxHP *= 2f;
+                        unit.currentHP = unit.maxHP;
+                        // Note: Unit class doesn't have writable name field
+                        // Boss status is tracked separately
                     }
                 }
             }
@@ -551,19 +555,19 @@ namespace GuildMaster.Exploration
                     switch (modifier)
                     {
                         case "physical_defense":
-                            unit.Defense *= value;
+                            unit.defense *= value;
                             break;
                         case "magic_damage":
-                            unit.MagicPower *= value;
+                            unit.magicPower *= value;
                             break;
                         case "evasion":
-                            unit.Speed *= value;
+                            unit.speed *= value;
                             break;
                         case "all_stats":
-                            unit.Attack *= value;
-                            unit.Defense *= value;
-                            unit.MagicPower *= value;
-                            unit.Speed *= value;
+                            unit.attackPower *= value;
+                            unit.defense *= value;
+                            unit.magicPower *= value;
+                            unit.speed *= value;
                             break;
                     }
                 }

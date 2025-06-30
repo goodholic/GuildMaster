@@ -26,6 +26,9 @@ namespace GuildMaster.Battle
         public int Index { get; set; }
         public SquadRole Role { get; set; }
         public bool IsPlayerSquad { get; set; }
+        public bool isDefeated => GetAliveUnits().Count == 0;
+        public float totalPower => GetTotalCombatPower();
+        public List<Unit> aliveUnits => GetAliveUnits();
         
         // Units Grid (3x6)
         private Unit[,] unitsGrid = new Unit[ROWS, COLS];
@@ -34,9 +37,15 @@ namespace GuildMaster.Battle
         // Squad Stats
         public float TotalHealth => CalculateTotalHealth();
         public float TotalMaxHealth => CalculateTotalMaxHealth();
-        public int AliveUnitsCount => unitsList.Count(u => u != null && u.IsAlive);
+        public int AliveUnitsCount => unitsList.Count(u => u != null && u.isAlive);
         public bool IsDefeated => AliveUnitsCount == 0;
-        public float AverageLevel => unitsList.Count > 0 ? (float)unitsList.Average(u => u.Level) : 0f;
+        public float AverageLevel => unitsList.Count > 0 ? (float)unitsList.Average(u => u.level) : 0f;
+        
+        // 추가 속성들
+        public bool IsAlive => !IsDefeated;
+        public List<Unit> Units => GetAllUnits();
+        public List<Unit> AliveUnits => GetAliveUnits();
+        public List<Unit> units => GetAllUnits(); // 호환성을 위한 소문자 속성
         
         // Squad Formation
         public enum Formation
@@ -100,7 +109,7 @@ namespace GuildMaster.Battle
             unitsGrid[row, col] = unit;
             unitsList.Add(unit);
             unit.SetPosition(Index, row, col);
-            unit.IsPlayerUnit = IsPlayerSquad;
+            unit.isPlayerUnit = IsPlayerSquad;
             
             // Subscribe to unit events
             unit.OnDeath += HandleUnitDeath;
@@ -147,14 +156,22 @@ namespace GuildMaster.Battle
         
         public List<Unit> GetAliveUnits()
         {
-            return unitsList.Where(u => u != null && u.IsAlive).ToList();
+            var aliveUnits = new List<Unit>();
+            foreach (var unit in GetAllUnits())
+            {
+                if (unit != null && unit.IsAlive)
+                {
+                    aliveUnits.Add(unit);
+                }
+            }
+            return aliveUnits;
         }
         
         // Position Management
         Vector2Int? FindBestPosition(Unit unit)
         {
             // Determine preferred positions based on job class
-            List<Vector2Int> preferredPositions = GetPreferredPositions(unit.JobClass);
+            List<Vector2Int> preferredPositions = GetPreferredPositions(unit.jobClass);
             
             // Try preferred positions first
             foreach (var pos in preferredPositions)
@@ -405,7 +422,7 @@ namespace GuildMaster.Battle
                     // Shield Wall - Increase defense for all units
                     foreach (var unit in GetAliveUnits())
                     {
-                        unit.Defense *= 1.5f;
+                        unit.defense *= 1.5f;
                     }
                     break;
                     
@@ -413,7 +430,7 @@ namespace GuildMaster.Battle
                     // Battle Cry - Increase attack for all units
                     foreach (var unit in GetAliveUnits())
                     {
-                        unit.Attack *= 1.3f;
+                        unit.attackPower *= 1.3f;
                     }
                     break;
                     
@@ -429,12 +446,42 @@ namespace GuildMaster.Battle
                     // Last Stand - Increase all stats when low health
                     foreach (var unit in GetAliveUnits())
                     {
-                        unit.Attack *= 1.5f;
-                        unit.Defense *= 1.5f;
-                        unit.Speed *= 1.5f;
+                        unit.attackPower *= 1.5f;
+                        unit.defense *= 1.5f;
+                        unit.speed *= 1.5f;
                     }
                     break;
             }
+        }
+
+        // Apply formation buffs
+        float GetFormationBonus(Vector2Int position)
+        {
+            float bonus = 1.0f;
+            
+            if (position.x == 0) // Front row gets defense bonus
+            {
+                bonus += 0.1f;
+            }
+            if (position.x == 2) // Back row gets speed bonus  
+            {
+                bonus += 0.1f;
+            }
+            
+            return bonus;
+        }
+
+        public float GetTotalCombatPower()
+        {
+            float totalPower = 0f;
+            foreach (var unit in GetAllUnits())
+            {
+                if (unit != null && unit.IsAlive)
+                {
+                    totalPower += unit.GetCombatPower();
+                }
+            }
+            return totalPower;
         }
     }
 }

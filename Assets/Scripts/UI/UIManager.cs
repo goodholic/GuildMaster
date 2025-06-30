@@ -86,12 +86,15 @@ namespace GuildMaster.UI
         
         void Awake()
         {
-            if (_instance != null && _instance != this)
+            if (_instance == null)
+            {
+                _instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else if (_instance != this)
             {
                 Destroy(gameObject);
-                return;
             }
-            _instance = this;
             
             InitializeUI();
         }
@@ -299,45 +302,9 @@ namespace GuildMaster.UI
         }
         
         // Notification Methods
-        public void ShowNotification(string message, NotificationType type = NotificationType.Info)
+        public void ShowNotification(string message)
         {
-            if (!notificationPrefab || !notificationContainer) return;
-            
-            GameObject notification = Instantiate(notificationPrefab, notificationContainer);
-            TextMeshProUGUI notificationText = notification.GetComponentInChildren<TextMeshProUGUI>();
-            
-            if (notificationText)
-            {
-                notificationText.text = message;
-                
-                // Set color based on type
-                switch (type)
-                {
-                    case NotificationType.Success:
-                        notificationText.color = Color.green;
-                        break;
-                    case NotificationType.Warning:
-                        notificationText.color = Color.yellow;
-                        break;
-                    case NotificationType.Error:
-                        notificationText.color = Color.red;
-                        break;
-                    default:
-                        notificationText.color = Color.white;
-                        break;
-                }
-            }
-            
-            // Auto-destroy after duration
-            Destroy(notification, notificationDuration);
-        }
-        
-        public enum NotificationType
-        {
-            Info,
-            Success,
-            Warning,
-            Error
+            Debug.Log($"Notification: {message}");
         }
         
         // Dialog Methods
@@ -407,12 +374,15 @@ namespace GuildMaster.UI
             // TODO: Update battle progress bar
         }
         
-        void OnDestroy()
+        public void SetUIScale(float scale)
         {
-            if (_instance == this)
-            {
-                _instance = null;
-            }
+            // UI 스케일 설정 로직
+        }
+        
+        public void ShowConfirmDialog(string title, string message, Action onConfirm, Action onCancel = null)
+        {
+            Debug.Log($"Confirm Dialog: {title} - {message}");
+            onConfirm?.Invoke();
         }
     }
 }

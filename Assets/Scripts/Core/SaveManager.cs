@@ -3,338 +3,415 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
+using GuildMaster.Data;
 
 namespace GuildMaster.Core
 {
     public class SaveManager : MonoBehaviour
     {
-        // Save Data Structure
-        [System.Serializable]
-        public class SaveData
+        private static SaveManager _instance;
+        public static SaveManager Instance
         {
-            // Meta Data
-            public string SaveVersion = "1.0.0";
-            public DateTime SaveTime;
-            public float PlayTime;
-            
-            // Guild Data
-            public string GuildName;
-            public int GuildLevel;
-            public int GuildReputation;
-            public int MaxAdventurers;
-            
-            // Resources
-            public int Gold;
-            public int Wood;
-            public int Stone;
-            public int ManaStone;
-            public int Reputation;
-            
-            // Buildings
-            public List<BuildingSaveData> Buildings = new List<BuildingSaveData>();
-            
-            // Adventurers
-            public List<AdventurerSaveData> Adventurers = new List<AdventurerSaveData>();
-            
-            // Game Progress
-            public int CurrentStoryChapter;
-            public List<string> CompletedQuests = new List<string>();
-            public Dictionary<string, int> Statistics = new Dictionary<string, int>();
-        }
-
-        [System.Serializable]
-        public class BuildingSaveData
-        {
-            public string BuildingType;
-            public int Level;
-            public int PositionX;
-            public int PositionY;
-            public bool IsConstructing;
-            public float ConstructionTimeRemaining;
-        }
-
-        [System.Serializable]
-        public class AdventurerSaveData
-        {
-            public string Name;
-            public int Level;
-            public string JobClass;
-            public float CurrentHealth;
-            public float MaxHealth;
-            public float Attack;
-            public float Defense;
-            public float MagicPower;
-            public float Speed;
-            public float CriticalRate;
-            public float Accuracy;
-            public int Experience;
-        }
-
-        // Save Settings
-        private const string SAVE_FILE_NAME = "guildmaster_save.json";
-        private const string BACKUP_SAVE_FILE_NAME = "guildmaster_save_backup.json";
-        private string SavePath => Path.Combine(Application.persistentDataPath, SAVE_FILE_NAME);
-        private string BackupSavePath => Path.Combine(Application.persistentDataPath, BACKUP_SAVE_FILE_NAME);
-
-        // Auto Save
-        private float autoSaveInterval = 300f; // 5 minutes
-        private float lastAutoSaveTime;
-        private bool isAutoSaveEnabled = true;
-
-        // Events
-        public event Action OnSaveStarted;
-        public event Action OnSaveCompleted;
-        public event Action OnLoadStarted;
-        public event Action OnLoadCompleted;
-        public event Action<string> OnSaveError;
-        public event Action<string> OnLoadError;
-
-        void Start()
-        {
-            lastAutoSaveTime = Time.time;
-        }
-
-        void Update()
-        {
-            // Auto save check
-            if (isAutoSaveEnabled && Time.time - lastAutoSaveTime >= autoSaveInterval)
+            get
             {
-                SaveGame();
-                lastAutoSaveTime = Time.time;
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<SaveManager>();
+                    if (_instance == null)
+                    {
+                        GameObject go = new GameObject("SaveManager");
+                        _instance = go.AddComponent<SaveManager>();
+                    }
+                }
+                return _instance;
+            }
+        }
+        
+        [Header("Save Settings")]
+        [SerializeField] private string saveDirectory = "Saves";
+        [SerializeField] private string saveFileExtension = ".sav";
+        [SerializeField] private int maxSaveSlots = 3;
+        [SerializeField] private float autoSaveInterval = 300f; // 5분
+        [SerializeField] private bool enableCompression = true;
+        [SerializeField] private bool enableEncryption = false;
+        
+        private string savePath;
+        private Coroutine autoSaveCoroutine;
+        private float lastSaveTime;
+        
+        // 암호화 키 (실제 게임에서는 더 안전한 방법 사용)
+        private const string ENCRYPTION_KEY = "GuildMaster2025SecretKey";
+
+        
+        void Awake()
+        {
+            if (_instance != null && _instance != this)
+            {
+                Destroy(gameObject);
+                return;
+            }
+            _instance = this;
+            
+            Initialize();
+        }
+        
+        public void Initialize()
+        {
+            // 저장 경로 설정
+            savePath = Path.Combine(Application.persistentDataPath, saveDirectory);
+            
+            // 디렉토리 생성
+            if (!Directory.Exists(savePath))
+            {
+                Directory.CreateDirectory(savePath);
+            }
+            
+            Debug.Log($"Save path: {savePath}");
+        }
+        
+        public void StartAutoSave()
+        {
+            if (autoSaveCoroutine != null)
+            {
+                StopCoroutine(autoSaveCoroutine);
+            }
+            
+            autoSaveCoroutine = StartCoroutine(AutoSaveRoutine());
+        }
+        
+        public void StopAutoSave()
+        {
+            if (autoSaveCoroutine != null)
+            {
+                StopCoroutine(autoSaveCoroutine);
+                autoSaveCoroutine = null;
+            }
+        }
+        
+        IEnumerator AutoSaveRoutine()
+        {
+            while (true)
+            {
+                yield return new WaitForSeconds(autoSaveInterval);
+                
+                if (Time.time - lastSaveTime >= autoSaveInterval)
+                {
+                    AutoSave();
+                }
             }
         }
 
-        public void SaveGame()
+        public bool SaveGame(int slotIndex, bool isAutoSave = false)
         {
-            StartCoroutine(SaveGameCoroutine());
-        }
-
-        private IEnumerator SaveGameCoroutine()
-        {
-            OnSaveStarted?.Invoke();
-            
             try
             {
-                SaveData saveData = CreateSaveData();
+                SaveData saveData = CreateSaveData(slotIndex, isAutoSave);
+                string fileName = GetSaveFileName(slotIndex, isAutoSave);
+                string fullPath = Path.Combine(savePath, fileName);
                 
-                // Backup existing save
-                if (File.Exists(SavePath))
+                // JSON으로 직렬화
+                string json = JsonUtility.ToJson(saveData, true);
+                
+                // 압축
+                if (enableCompression)
                 {
-                    File.Copy(SavePath, BackupSavePath, true);
+                    json = CompressString(json);
                 }
                 
-                // Save to JSON
-                string json = JsonUtility.ToJson(saveData, true);
-                File.WriteAllText(SavePath, json);
+                // 암호화
+                if (enableEncryption)
+                {
+                    json = EncryptString(json);
+                }
                 
-                OnSaveCompleted?.Invoke();
-                Debug.Log($"Game saved successfully at {DateTime.Now}");
+                // 파일 저장
+                File.WriteAllText(fullPath, json);
+                
+                // 스크린샷 저장
+                SaveScreenshot(slotIndex);
+                
+                lastSaveTime = Time.time;
+                
+                Debug.Log($"Game saved to slot {slotIndex}");
+                return true;
             }
             catch (Exception e)
             {
-                OnSaveError?.Invoke($"Failed to save game: {e.Message}");
-                Debug.LogError($"Save failed: {e}");
+                Debug.LogError($"Failed to save game: {e.Message}");
+                return false;
             }
-            
-            yield return null;
         }
 
-        private SaveData CreateSaveData()
+        public SaveData LoadGame(int slotIndex, bool isAutoSave = false)
         {
-            SaveData saveData = new SaveData();
-            saveData.SaveTime = DateTime.Now;
-            saveData.PlayTime = Time.time;
+            try
+            {
+                string fileName = GetSaveFileName(slotIndex, isAutoSave);
+                string fullPath = Path.Combine(savePath, fileName);
+                
+                if (!File.Exists(fullPath))
+                {
+                    Debug.LogWarning($"Save file not found: {fullPath}");
+                    return null;
+                }
+                
+                // 파일 읽기
+                string json = File.ReadAllText(fullPath);
+                
+                // 복호화
+                if (enableEncryption)
+                {
+                    json = DecryptString(json);
+                }
+                
+                // 압축 해제
+                if (enableCompression)
+                {
+                    json = DecompressString(json);
+                }
+                
+                // 역직렬화
+                SaveData saveData = JsonUtility.FromJson<SaveData>(json);
+                
+                Debug.Log($"Game loaded from slot {slotIndex}");
+                return saveData;
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to load game: {e.Message}");
+                return null;
+            }
+        }
+        
+        public void DeleteSave(int slotIndex)
+        {
+            try
+            {
+                // 일반 세이브 삭제
+                string fileName = GetSaveFileName(slotIndex, false);
+                string fullPath = Path.Combine(savePath, fileName);
+                
+                if (File.Exists(fullPath))
+                {
+                    File.Delete(fullPath);
+                }
+                
+                // 스크린샷 삭제
+                string screenshotPath = GetScreenshotPath(slotIndex);
+                if (File.Exists(screenshotPath))
+                {
+                    File.Delete(screenshotPath);
+                }
+                
+                Debug.Log($"Save slot {slotIndex} deleted");
+            }
+            catch (Exception e)
+            {
+                Debug.LogError($"Failed to delete save: {e.Message}");
+            }
+        }
+        
+        public void AutoSave()
+        {
+            SaveGame(-1, true); // -1은 자동 저장 슬롯
+            Debug.Log("Auto-save completed");
+        }
+        
+        public bool HasAutoSave()
+        {
+            string fileName = GetSaveFileName(-1, true);
+            string fullPath = Path.Combine(savePath, fileName);
+            return File.Exists(fullPath);
+        }
+        
+        public SaveData[] GetAllSaveData()
+        {
+            List<SaveData> saves = new List<SaveData>();
             
-            // Get managers
+            for (int i = 0; i < maxSaveSlots; i++)
+            {
+                SaveData data = LoadGame(i, false);
+                if (data != null)
+                {
+                    saves.Add(data);
+                }
+            }
+            
+            return saves.ToArray();
+        }
+        
+        SaveData CreateSaveData(int slotIndex, bool isAutoSave)
+        {
             var gameManager = GameManager.Instance;
-            if (gameManager == null) return saveData;
+            if (gameManager == null) return null;
             
-            // Save Guild Data
-            var guildManager = gameManager.GuildManager;
-            if (guildManager != null)
+            SaveData saveData = new SaveData
             {
-                var guildData = guildManager.GetGuildData();
-                saveData.GuildName = guildData.GuildName;
-                saveData.GuildLevel = guildData.GuildLevel;
-                saveData.GuildReputation = guildData.GuildReputation;
-                saveData.MaxAdventurers = guildData.MaxAdventurers;
+                slotIndex = slotIndex,
+                isAutoSave = isAutoSave,
+                saveTime = DateTime.Now.Ticks,
+                gameVersion = Application.version,
                 
-                // Save Buildings
-                foreach (var building in guildData.Buildings)
-                {
-                    BuildingSaveData buildingSave = new BuildingSaveData
-                    {
-                        BuildingType = building.Type.ToString(),
-                        Level = building.Level,
-                        PositionX = building.Position.x,
-                        PositionY = building.Position.y,
-                        IsConstructing = building.IsConstructing,
-                        ConstructionTimeRemaining = building.ConstructionTimeRemaining
-                    };
-                    saveData.Buildings.Add(buildingSave);
-                }
+                // 플레이어 데이터
+                playerName = PlayerPrefs.GetString("PlayerName", "Player"),
+                guildName = gameManager.GuildManager?.GetGuildName() ?? "Guild",
+                guildLevel = gameManager.GuildManager?.GetGuildLevel() ?? 1,
+                totalPlayTime = Time.time,
                 
-                // Save Adventurers
-                foreach (var adventurer in guildData.Adventurers)
-                {
-                    AdventurerSaveData adventurerSave = new AdventurerSaveData
-                    {
-                        Name = adventurer.Name,
-                        Level = adventurer.Level,
-                        JobClass = adventurer.JobClass.ToString(),
-                        CurrentHealth = adventurer.CurrentHealth,
-                        MaxHealth = adventurer.MaxHealth,
-                        Attack = adventurer.Attack,
-                        Defense = adventurer.Defense,
-                        MagicPower = adventurer.MagicPower,
-                        Speed = adventurer.Speed,
-                        CriticalRate = adventurer.CriticalRate,
-                        Accuracy = adventurer.Accuracy,
-                        Experience = 0 // TODO: Add experience system
-                    };
-                    saveData.Adventurers.Add(adventurerSave);
-                }
-            }
-            
-            // Save Resources
-            var resourceManager = gameManager.ResourceManager;
-            if (resourceManager != null)
-            {
-                var resources = resourceManager.GetResources();
-                saveData.Gold = resources.Gold;
-                saveData.Wood = resources.Wood;
-                saveData.Stone = resources.Stone;
-                saveData.ManaStone = resources.ManaStone;
-                saveData.Reputation = resources.Reputation;
-            }
+                // 자원 데이터
+                gold = gameManager.ResourceManager?.GetGold() ?? 0,
+                wood = gameManager.ResourceManager?.GetWood() ?? 0,
+                stone = gameManager.ResourceManager?.GetStone() ?? 0,
+                manaStone = gameManager.ResourceManager?.GetManaStone() ?? 0,
+                reputation = gameManager.ResourceManager?.GetReputation() ?? 0,
+                
+                // 게임 진행 상태
+                currentChapter = 1, // 기본값으로 설정
+                completedQuests = new List<string>(), // TODO: 퀘스트 시스템에서 가져오기
+                unlockedBuildings = new List<string>(), // TODO: 건물 시스템에서 가져오기
+                
+                // 모험가 데이터
+                adventurers = SaveAdventurerData(),
+                
+                // 건물 데이터
+                buildings = SaveBuildingData(),
+                
+                // 스크린샷 경로
+                screenshotPath = GetScreenshotPath(slotIndex)
+            };
             
             return saveData;
         }
 
-        public IEnumerator LoadGame()
+        List<AdventurerSaveData> SaveAdventurerData()
         {
-            OnLoadStarted?.Invoke();
+            var adventurers = new List<AdventurerSaveData>();
+            var guildManager = GameManager.Instance?.GuildManager;
             
-            if (!File.Exists(SavePath))
+            if (guildManager != null)
             {
-                Debug.Log("No save file found. Starting new game.");
-                OnLoadCompleted?.Invoke();
-                yield break;
+                foreach (var unit in guildManager.GetAdventurers())
+                {
+                    adventurers.Add(new AdventurerSaveData
+                    {
+                        id = unit.unitId,
+                        name = unit.unitName,
+                        level = unit.level,
+                        experience = unit.experience,
+                        jobClass = unit.jobClass.ToString(),
+                        rarity = unit.rarity.ToString(),
+                        awakenLevel = unit.awakenLevel,
+                        equipmentIds = new List<string>() // TODO: 장비 시스템에서 가져오기
+                    });
+                }
             }
-
-            yield return StartCoroutine(LoadGameFromFile(SavePath, false));
+            
+            return adventurers;
         }
-
-        private IEnumerator LoadGameFromFile(string filePath, bool isBackup)
+        
+        List<BuildingSaveData> SaveBuildingData()
         {
-            SaveData saveData = null;
-            bool loadSuccess = false;
-            string errorMessage = "";
-
-            // Try to load the file (no yield in try-catch)
-            try
+            var buildings = new List<BuildingSaveData>();
+            // TODO: 건물 시스템에서 데이터 가져오기
+            return buildings;
+        }
+        
+        string GetSaveFileName(int slotIndex, bool isAutoSave)
+        {
+            if (isAutoSave)
             {
-                string json = File.ReadAllText(filePath);
-                saveData = JsonUtility.FromJson<SaveData>(json);
-                loadSuccess = saveData != null;
-            }
-            catch (Exception e)
-            {
-                errorMessage = $"Failed to load game: {e.Message}";
-                Debug.LogError($"Load failed: {e}");
-            }
-
-            // Handle the result (yield allowed here)
-            if (loadSuccess && saveData != null)
-            {
-                yield return StartCoroutine(ApplySaveData(saveData));
-                OnLoadCompleted?.Invoke();
-                Debug.Log($"Game loaded successfully. Save from: {saveData.SaveTime}");
+                return $"autosave{saveFileExtension}";
             }
             else
             {
-                OnLoadError?.Invoke(errorMessage);
-                
-                // Try to load backup if this wasn't already a backup attempt
-                if (!isBackup && File.Exists(BackupSavePath))
-                {
-                    Debug.Log("Attempting to load backup save...");
-                    yield return StartCoroutine(LoadGameFromFile(BackupSavePath, true));
-                }
+                return $"save_{slotIndex}{saveFileExtension}";
             }
         }
-
-        private IEnumerator LoadBackupSave()
+        
+        string GetScreenshotPath(int slotIndex)
         {
-            yield return StartCoroutine(LoadGameFromFile(BackupSavePath, true));
+            return Path.Combine(savePath, $"screenshot_{slotIndex}.png");
         }
-
-        private IEnumerator ApplySaveData(SaveData saveData)
+        
+        void SaveScreenshot(int slotIndex)
         {
-            var gameManager = GameManager.Instance;
-            if (gameManager == null) yield break;
+            StartCoroutine(CaptureScreenshot(slotIndex));
+        }
+        
+        IEnumerator CaptureScreenshot(int slotIndex)
+        {
+            yield return new WaitForEndOfFrame();
             
-            // Load Resources
-            var resourceManager = gameManager.ResourceManager;
-            if (resourceManager != null)
+            int width = 320;
+            int height = 180;
+            
+            RenderTexture rt = new RenderTexture(width, height, 24);
+            Camera.main.targetTexture = rt;
+            
+            Texture2D screenshot = new Texture2D(width, height, TextureFormat.RGB24, false);
+            Camera.main.Render();
+            
+            RenderTexture.active = rt;
+            screenshot.ReadPixels(new Rect(0, 0, width, height), 0, 0);
+            screenshot.Apply();
+            
+            Camera.main.targetTexture = null;
+            RenderTexture.active = null;
+            Destroy(rt);
+            
+            byte[] bytes = screenshot.EncodeToPNG();
+            string path = GetScreenshotPath(slotIndex);
+            File.WriteAllBytes(path, bytes);
+            
+            Destroy(screenshot);
+        }
+
+        // 압축 메서드 (간단한 구현)
+        string CompressString(string text)
+        {
+            byte[] buffer = System.Text.Encoding.UTF8.GetBytes(text);
+            var ms = new MemoryStream();
+            
+            using (var zip = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionMode.Compress, true))
             {
-                resourceManager.AddGold(saveData.Gold - resourceManager.GetGold());
-                resourceManager.AddWood(saveData.Wood - resourceManager.GetWood());
-                resourceManager.AddStone(saveData.Stone - resourceManager.GetStone());
-                resourceManager.AddManaStone(saveData.ManaStone - resourceManager.GetManaStone());
-                resourceManager.AddReputation(saveData.Reputation - resourceManager.GetReputation());
+                zip.Write(buffer, 0, buffer.Length);
             }
             
-            // TODO: Load Guild Data, Buildings, Adventurers
-            // This would require additional methods in GuildManager to clear and rebuild from save data
+            ms.Position = 0;
+            byte[] compressed = ms.ToArray();
+            return Convert.ToBase64String(compressed);
+        }
+        
+        string DecompressString(string compressedText)
+        {
+            byte[] compressed = Convert.FromBase64String(compressedText);
             
-            yield return null;
-        }
-
-        public void DeleteSave()
-        {
-            try
+            using (var ms = new MemoryStream(compressed))
+            using (var zip = new System.IO.Compression.GZipStream(ms, System.IO.Compression.CompressionMode.Decompress))
+            using (var reader = new StreamReader(zip))
             {
-                if (File.Exists(SavePath))
-                {
-                    File.Delete(SavePath);
-                }
-                
-                if (File.Exists(BackupSavePath))
-                {
-                    File.Delete(BackupSavePath);
-                }
-                
-                Debug.Log("Save files deleted.");
-            }
-            catch (Exception e)
-            {
-                Debug.LogError($"Failed to delete save files: {e}");
+                return reader.ReadToEnd();
             }
         }
-
-        public bool HasSaveFile()
+        
+        // 암호화 메서드 (간단한 XOR 암호화)
+        string EncryptString(string text)
         {
-            return File.Exists(SavePath);
-        }
-
-        public DateTime GetLastSaveTime()
-        {
-            if (File.Exists(SavePath))
+            byte[] data = System.Text.Encoding.UTF8.GetBytes(text);
+            byte[] key = System.Text.Encoding.UTF8.GetBytes(ENCRYPTION_KEY);
+            
+            for (int i = 0; i < data.Length; i++)
             {
-                return File.GetLastWriteTime(SavePath);
+                data[i] = (byte)(data[i] ^ key[i % key.Length]);
             }
-            return DateTime.MinValue;
+            
+            return Convert.ToBase64String(data);
+        }
+        
+        string DecryptString(string encryptedText)
+        {
+            return EncryptString(encryptedText); // XOR은 대칭 암호화
         }
 
-        public void SetAutoSaveEnabled(bool enabled)
-        {
-            isAutoSaveEnabled = enabled;
-        }
-
-        public void SetAutoSaveInterval(float seconds)
-        {
-            autoSaveInterval = Mathf.Max(60f, seconds); // Minimum 1 minute
-        }
     }
 }

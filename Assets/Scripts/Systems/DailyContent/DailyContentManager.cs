@@ -1,7 +1,9 @@
 using UnityEngine;
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle; // Unit을 위해 추가
 
 namespace GuildMaster.Systems
 {
@@ -50,6 +52,13 @@ namespace GuildMaster.Systems
         public int ReputationReward { get; set; }
         public int ExperienceReward { get; set; }
         public List<string> ItemRewards { get; set; }
+
+        // ConvenienceSystem에서 사용하는 프로퍼티들
+        public int questId => QuestId.GetHashCode();
+        public string questName => Name;
+        public int goldReward => GoldReward;
+        public int expReward => ExperienceReward;
+        public bool isRewarded => IsClaimed;
         
         public Quest(string id, string name, QuestType type, QuestObjective objective, int target)
         {
@@ -142,6 +151,18 @@ namespace GuildMaster.Systems
     
     public class DailyContentManager : MonoBehaviour
     {
+        private static DailyContentManager _instance;
+        public static DailyContentManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<DailyContentManager>();
+                }
+                return _instance;
+            }
+        }
         // Quest management
         private List<Quest> activeQuests;
         private List<Quest> completedQuests;
@@ -173,6 +194,16 @@ namespace GuildMaster.Systems
         
         void Awake()
         {
+            if (_instance == null)
+            {
+                _instance = this;
+                DontDestroyOnLoad(gameObject);
+            }
+            else if (_instance != this)
+            {
+                Destroy(gameObject);
+            }
+
             activeQuests = new List<Quest>();
             completedQuests = new List<Quest>();
             objectiveTracking = new Dictionary<QuestObjective, int>();
@@ -732,6 +763,27 @@ namespace GuildMaster.Systems
         public bool IsPremiumPass()
         {
             return isPremiumPass;
+        }
+
+        // 완료된 일일 퀘스트 목록 반환
+        public List<Quest> GetCompletedDailyQuests()
+        {
+            return activeQuests.Where(q => q.Type == QuestType.Daily && q.IsCompleted && !q.IsClaimed).ToList();
+        }
+
+        // 모든 일일 퀘스트 자동 완료
+        public void CompleteAllDailyQuests()
+        {
+            var dailyQuests = GetDailyQuests();
+            foreach (var quest in dailyQuests)
+            {
+                if (!quest.IsCompleted)
+                {
+                    quest.CurrentProgress = quest.TargetAmount;
+                    quest.IsCompleted = true;
+                    OnQuestCompleted?.Invoke(quest);
+                }
+            }
         }
         
         // Utility class for serialization

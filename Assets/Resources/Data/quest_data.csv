@@ -1,0 +1,51 @@
+questId,questName,description,questType,requirements,rewards,repeatType,cooldown,level,experience,gold,items
+quest_001,길드의 시작,길드를 처음 설립하고 모험가를 모집하세요,Tutorial,BuildGuildHall:1|RecruitAdventurer:3,Gold:100|Exp:50,Once,0,1,50,100,item_014:3
+quest_002,첫 전투,첫 번째 전투에서 승리하세요,Tutorial,BattleVictory:1,Gold:200|Exp:100,Once,0,1,100,200,item_015:1
+quest_003,건설의 기초,훈련소를 건설하세요,Tutorial,BuildTrainingCenter:1,Gold:300|Exp:150,Once,0,2,150,300,item_033:10|item_034:10
+quest_004,일일 훈련,모험가들을 훈련시키세요,Daily,TrainAdventurers:5,Gold:50|Exp:30,Daily,24,1,30,50,item_014:2
+quest_005,자원 수집,자원을 수집하세요,Daily,CollectWood:100|CollectStone:100,Gold:80|Exp:40,Daily,24,1,40,80,item_033:20|item_034:20
+quest_006,던전 탐험,던전을 탐험하세요,Daily,ExploreDungeon:1,Gold:150|Exp:80,Daily,24,3,80,150,item_016:1
+quest_007,상인과 거래,NPC 상인과 거래하세요,Daily,TradeWithMerchant:1,Gold:100|Exp:50,Daily,24,2,50,100,item_036:2
+quest_008,길드전 참가,AI 길드와 대전하세요,Weekly,GuildBattle:3,Gold:500|Exp:300,Weekly,168,5,300,500,item_021:1
+quest_009,주간 목표,일주일 동안 활발히 활동하세요,Weekly,LoginDays:7|CompleteQuests:20,Gold:1000|Exp:600,Weekly,168,1,600,1000,item_039:1
+quest_010,던전 마스터,여러 던전을 클리어하세요,Weekly,ClearDungeons:10,Gold:800|Exp:500,Weekly,168,5,500,800,item_024:1
+quest_011,건설 러시,여러 건물을 건설하세요,Achievement,BuildBuildings:10,Gold:2000|Exp:1000,Once,0,5,1000,2000,item_041:1
+quest_012,베테랑 모험가,모험가를 최고 레벨까지 육성하세요,Achievement,MaxLevelAdventurer:1,Gold:3000|Exp:1500,Once,0,10,1500,3000,item_043:1
+quest_013,길드 명성,길드 명성을 높이세요,Achievement,GuildReputation:1000,Gold:5000|Exp:2500,Once,0,15,2500,5000,item_041:1
+quest_014,전설의 시작,전설 등급 장비를 획득하세요,Achievement,LegendaryItem:1,Gold:10000|Exp:5000,Once,0,20,5000,10000,item_027:1
+quest_015,무한 도전자,무한 던전 50층에 도달하세요,Achievement,InfiniteDungeon:50,Gold:8000|Exp:4000,Once,0,15,4000,8000,item_026:1
+quest_016,스킬 마스터,스킬을 최대 레벨까지 강화하세요,Achievement,MaxSkillLevel:1,Gold:2500|Exp:1200,Once,0,8,1200,2500,item_032:1
+quest_017,친화력의 달인,모든 NPC 길드와 우호 관계를 맺으세요,Achievement,FriendlyGuilds:5,Gold:6000|Exp:3000,Once,0,12,3000,6000,item_041:1
+quest_018,수집가,아이템을 100개 수집하세요,Achievement,CollectItems:100,Gold:1500|Exp:800,Once,0,5,800,1500,item_040:1
+quest_019,길드 확장,길드 멤버를 30명으로 늘리세요,Achievement,GuildMembers:30,Gold:4000|Exp:2000,Once,0,10,2000,4000,item_044:3
+quest_020,챔피언,AI 길드 토너먼트에서 우승하세요,Achievement,TournamentWin:1,Gold:15000|Exp:7500,Once,0,20,7500,15000,item_043:1
+quest_021,아이템 강화,장비를 강화하세요,Daily,EnhanceItem:1,Gold:120|Exp:60,Daily,24,4,60,120,item_046:1
+quest_022,스킬 연습,스킬을 사용하세요,Daily,UseSkills:20,Gold:80|Exp:40,Daily,24,2,40,80,item_019:2
+quest_023,치료사의 임무,아군을 치유하세요,Daily,HealAllies:500,Gold:100|Exp:50,Daily,24,3,50,100,item_017:1
+quest_024,전투의 달인,연속으로 전투에서 승리하세요,Daily,ConsecutiveWins:3,Gold:200|Exp:100,Daily,24,5,100,200,item_021:1
+quest_025,자원 관리자,자원을 효율적으로 사용하세요,Daily,SaveResources:1000,Gold:150|Exp:75,Daily,24,4,75,150,item_036:3
+quest_026,영웅 모집,희귀 모험가를 모집하세요,Weekly,RecruitRare:1,Gold:1200|Exp:600,Weekly,168,8,600,1200,item_043:1
+quest_027,건물 업그레이드,건물을 업그레이드하세요,Weekly,UpgradeBuilding:5,Gold:1500|Exp:750,Weekly,168,6,750,1500,item_044:2
+quest_028,대규모 전투,36명 전원이 참여하는 전투에서 승리하세요,Weekly,FullSquadBattle:1,Gold:2000|Exp:1000,Weekly,168,10,1000,2000,item_025:1
+quest_029,완벽한 승리,피해 없이 전투에서 승리하세요,Achievement,PerfectVictory:1,Gold:3000|Exp:1500,Once,0,15,1500,3000,item_027:1
+quest_030,속도의 대가,1분 내에 전투를 끝내세요,Achievement,SpeedVictory:1,Gold:2000|Exp:1000,Once,0,10,1000,2000,item_023:1
+quest_031,생존자,전투에서 모든 유닛이 생존하세요,Achievement,AllSurvive:10,Gold:4000|Exp:2000,Once,0,12,2000,4000,item_045:3
+quest_032,크리티컬 마스터,크리티컬 히트를 100번 달성하세요,Achievement,CriticalHits:100,Gold:2500|Exp:1250,Once,0,8,1250,2500,item_054:1
+quest_033,방어의 달인,받은 피해를 최소화하세요,Achievement,MinimizeDamage:10000,Gold:3500|Exp:1750,Once,0,10,1750,3500,item_055:1
+quest_034,스피드런,던전을 빠르게 클리어하세요,Daily,SpeedClearDungeon:1,Gold:180|Exp:90,Daily,24,6,90,180,item_051:1
+quest_035,보물 사냥꾼,던전에서 보물을 발견하세요,Daily,FindTreasure:3,Gold:200|Exp:100,Daily,24,5,100,200,item_042:1
+quest_036,경험치 수집,경험치를 대량 획득하세요,Daily,GainExp:5000,Gold:150|Exp:100,Daily,24,3,100,150,item_039:1
+quest_037,골드 러시,골드를 대량 획득하세요,Daily,GainGold:1000,Gold:200|Exp:80,Daily,24,4,80,200,item_040:1
+quest_038,팀워크,4개 부대가 모두 활약하는 전투에서 승리하세요,Weekly,TeamBattle:5,Gold:2500|Exp:1250,Weekly,168,12,1250,2500,item_026:1
+quest_039,연구의 달인,새로운 기술을 연구하세요,Weekly,Research:3,Gold:1800|Exp:900,Weekly,168,8,900,1800,item_050:1
+quest_040,외교관,NPC 길드와 관계를 개선하세요,Weekly,ImproveRelations:5,Gold:2000|Exp:1000,Weekly,168,10,1000,2000,item_041:1
+quest_041,최강의 길드,길드 레벨을 30에 도달하세요,Achievement,GuildLevel:30,Gold:20000|Exp:10000,Once,0,30,10000,20000,item_043:2
+quest_042,만능 플레이어,모든 종류의 콘텐츠를 경험하세요,Achievement,AllContent:1,Gold:15000|Exp:7500,Once,0,25,7500,15000,item_026:2
+quest_043,베테랑 길드 마스터,100일 동안 길드를 운영하세요,Achievement,PlayDays:100,Gold:25000|Exp:12500,Once,0,20,12500,25000,item_027:2
+quest_044,컬렉터,모든 종류의 모험가를 모집하세요,Achievement,CollectAllClasses:7,Gold:10000|Exp:5000,Once,0,15,5000,10000,item_043:1
+quest_045,최고의 장비,모든 슬롯에 전설 장비를 착용하세요,Achievement,FullLegendary:1,Gold:30000|Exp:15000,Once,0,30,15000,30000,item_027:3
+quest_046,스킬 컬렉터,50개의 스킬을 수집하세요,Achievement,CollectSkills:50,Gold:8000|Exp:4000,Once,0,18,4000,8000,item_032:2
+quest_047,부자,100만 골드를 보유하세요,Achievement,Gold:1000000,Gold:50000|Exp:25000,Once,0,25,25000,50000,item_040:5
+quest_048,영토 확장,모든 지역을 정복하세요,Achievement,ConquerAll:1,Gold:40000|Exp:20000,Once,0,30,20000,40000,item_041:3
+quest_049,완벽한 길드,모든 시설을 최대 레벨로 업그레이드하세요,Achievement,MaxAllBuildings:1,Gold:60000|Exp:30000,Once,0,30,30000,60000,item_043:3
+quest_050,전설이 되다,모든 업적을 달성하세요,Achievement,CompleteAllAchievements:1,Gold:100000|Exp:50000,Once,0,30,50000,100000,item_027:5

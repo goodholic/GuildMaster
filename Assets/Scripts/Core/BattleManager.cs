@@ -3,6 +3,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
+using GuildMaster.Battle; // Unit, JobClass를 위해 추가
 
 namespace GuildMaster.Core
 {
@@ -49,6 +50,7 @@ namespace GuildMaster.Core
             public bool IsPlayerSquad { get; set; }
             public float TotalHealth => GetTotalHealth();
             public bool IsDefeated => GetAliveUnitsCount() == 0;
+            public float totalPower => GetTotalPower();
 
             private float GetTotalHealth()
             {
@@ -60,6 +62,23 @@ namespace GuildMaster.Core
                         if (Units[row, col] != null && Units[row, col].IsAlive)
                         {
                             total += Units[row, col].CurrentHealth;
+                        }
+                    }
+                }
+                return total;
+            }
+
+            private float GetTotalPower()
+            {
+                float total = 0;
+                for (int row = 0; row < SQUAD_ROWS; row++)
+                {
+                    for (int col = 0; col < SQUAD_COLS; col++)
+                    {
+                        if (Units[row, col] != null && Units[row, col].IsAlive)
+                        {
+                            var unit = Units[row, col];
+                            total += unit.CurrentHealth * 0.5f + unit.AttackModifiable * 2f + unit.Defense * 1.5f + unit.Speed;
                         }
                     }
                 }
@@ -556,7 +575,7 @@ namespace GuildMaster.Core
                         Unit unit = squad.Units[row, col];
                         if (unit != null && unit.IsAlive)
                         {
-                            unit.Experience += baseExp;
+                            unit.experience += baseExp;
                             // TODO: Check for level up
                         }
                     }
@@ -756,9 +775,9 @@ namespace GuildMaster.Core
                     Unit unit = squad.Units[row, col];
                     if (unit != null)
                     {
-                        unit.Attack *= (1 + synergy.AttackBonus);
-                        unit.Defense *= (1 + synergy.DefenseBonus);
-                        unit.Speed *= (1 + synergy.SpeedBonus);
+                        unit.attackPower *= (1 + synergy.AttackBonus);
+                        unit.defense *= (1 + synergy.DefenseBonus);
+                        unit.speed *= (1 + synergy.SpeedBonus);
                     }
                 }
             }
@@ -787,16 +806,16 @@ namespace GuildMaster.Core
                             switch (tactic)
                             {
                                 case BattleTactic.Aggressive:
-                                    unit.Attack *= 1.2f;
-                                    unit.Defense *= 0.9f;
+                                    unit.attackPower *= 1.2f;
+                                    unit.defense *= 0.9f;
                                     break;
                                 case BattleTactic.Defensive:
-                                    unit.Defense *= 1.3f;
-                                    unit.Attack *= 0.85f;
+                                    unit.defense *= 1.3f;
+                                    unit.attackPower *= 0.85f;
                                     break;
                                 case BattleTactic.Blitz:
-                                    unit.Speed *= 1.4f;
-                                    unit.Defense *= 0.8f;
+                                    unit.speed *= 1.4f;
+                                    unit.defense *= 0.8f;
                                     break;
                             }
                         }

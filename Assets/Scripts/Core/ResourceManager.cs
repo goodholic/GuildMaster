@@ -15,6 +15,25 @@ namespace GuildMaster.Core
     
     public class ResourceManager : MonoBehaviour
     {
+        private static ResourceManager _instance;
+        public static ResourceManager Instance
+        {
+            get
+            {
+                if (_instance == null)
+                {
+                    _instance = FindObjectOfType<ResourceManager>();
+                    if (_instance == null)
+                    {
+                        GameObject go = new GameObject("ResourceManager");
+                        _instance = go.AddComponent<ResourceManager>();
+                        DontDestroyOnLoad(go);
+                    }
+                }
+                return _instance;
+            }
+        }
+
         // Resource Types
         [System.Serializable]
         public class Resources
@@ -196,22 +215,66 @@ namespace GuildMaster.Core
         {
             if (!CanAfford(gold, wood, stone, manaStone))
             {
-                Debug.LogError("Not enough resources!");
+                Debug.LogWarning("Insufficient resources!");
                 return;
             }
 
-            if (gold > 0) AddGold(-gold);
-            if (wood > 0) AddWood(-wood);
-            if (stone > 0) AddStone(-stone);
-            if (manaStone > 0) AddManaStone(-manaStone);
+            currentResources.Gold -= gold;
+            currentResources.Wood -= wood;
+            currentResources.Stone -= stone;
+            currentResources.ManaStone -= manaStone;
+
+            // Record transactions
+            if (gold > 0) RecordTransaction(ResourceType.Gold, -gold, "Spend");
+            if (wood > 0) RecordTransaction(ResourceType.Wood, -wood, "Spend");
+            if (stone > 0) RecordTransaction(ResourceType.Stone, -stone, "Spend");
+            if (manaStone > 0) RecordTransaction(ResourceType.ManaStone, -manaStone, "Spend");
+
+            OnResourcesChanged?.Invoke(currentResources);
+        }
+        
+        public bool SpendGold(int amount)
+        {
+            if (currentResources.Gold >= amount)
+            {
+                currentResources.Gold -= amount;
+                RecordTransaction(ResourceType.Gold, -amount, "Spend");
+                OnResourcesChanged?.Invoke(currentResources);
+                OnGoldChanged?.Invoke(currentResources.Gold);
+                return true;
+            }
+            return false;
         }
 
         // Add Resources
         public void AddGold(int amount)
         {
-            AddResource(ResourceType.Gold, amount, "Direct");
+            AddResource(ResourceType.Gold, amount, "Manual Addition");
         }
-        
+
+        public void AddResources(Dictionary<string, int> resources)
+        {
+            foreach (var resource in resources)
+            {
+                switch (resource.Key.ToLower())
+                {
+                    case "gold":
+                        AddResource(ResourceType.Gold, resource.Value, "Refund");
+                        break;
+                    case "wood":
+                        AddResource(ResourceType.Wood, resource.Value, "Refund");
+                        break;
+                    case "stone":
+                        AddResource(ResourceType.Stone, resource.Value, "Refund");
+                        break;
+                    case "mana":
+                    case "manastone":
+                        AddResource(ResourceType.ManaStone, resource.Value, "Refund");
+                        break;
+                }
+            }
+        }
+
         public void AddResource(ResourceType type, int amount, string source = "Unknown")
         {
             int previousAmount = currentResources.GetResource(type);

@@ -1,0 +1,61 @@
+dialogueId,speakerId,dialogueText,nextDialogueId,choices,conditions,effects
+dialogue_001,npc_merchant_001,어서 오세요! 오늘은 특별한 상품들을 준비했습니다.,dialogue_002,구매하기:dialogue_003|나중에:dialogue_004,GuildLevel:1,
+dialogue_002,npc_merchant_001,무엇을 찾으시나요?,dialogue_003,무기:dialogue_005|방어구:dialogue_006|물약:dialogue_007|떠나기:dialogue_004,,
+dialogue_003,npc_merchant_001,좋은 선택이십니다!,,,Gold:100,Gold:-100
+dialogue_004,npc_merchant_001,다음에 또 들러주세요!,,,,
+dialogue_005,npc_merchant_001,최고급 무기들을 준비했습니다. 전투에서 큰 도움이 될 겁니다.,dialogue_008,철검 구매:dialogue_009|강철검 구매:dialogue_010|돌아가기:dialogue_002,Gold:150,
+dialogue_006,npc_merchant_001,튼튼한 방어구들입니다. 모험가들의 생명을 지켜줄 겁니다.,dialogue_011,가죽 갑옷:dialogue_012|철 갑옷:dialogue_013|돌아가기:dialogue_002,Gold:200,
+dialogue_007,npc_merchant_001,각종 물약들을 준비했습니다. 위급할 때 유용할 겁니다.,dialogue_014,치유 물약:dialogue_015|마나 물약:dialogue_016|돌아가기:dialogue_002,Gold:50,
+dialogue_008,npc_merchant_001,훌륭한 무기를 고르셨군요!,dialogue_002,,,Item:weapon_001
+dialogue_009,npc_merchant_001,철검을 구매하셨습니다. 좋은 선택입니다!,dialogue_002,,,Item:item_002|Gold:-150
+dialogue_010,npc_merchant_001,강철검을 구매하셨습니다. 최고의 품질을 보장합니다!,dialogue_002,,,Item:item_003|Gold:-500
+dialogue_011,npc_merchant_001,안전이 최우선이죠!,dialogue_002,,,
+dialogue_012,npc_merchant_001,가죽 갑옷을 구매하셨습니다. 가볍고 튼튼합니다!,dialogue_002,,,Item:item_008|Gold:-120
+dialogue_013,npc_merchant_001,철 갑옷을 구매하셨습니다. 최고의 방어력을 자랑합니다!,dialogue_002,,,Item:item_009|Gold:-300
+dialogue_014,npc_merchant_001,모험에는 항상 위험이 따르죠.,dialogue_002,,,
+dialogue_015,npc_merchant_001,치유 물약을 구매하셨습니다. 위급할 때 사용하세요!,dialogue_002,,,Item:item_014|Gold:-30
+dialogue_016,npc_merchant_001,마나 물약을 구매하셨습니다. 마법사들에게 필수품이죠!,dialogue_002,,,Item:item_019|Gold:-40
+dialogue_017,guild_master,새로운 모험가가 필요합니다. 어디서 찾을 수 있을까요?,dialogue_018,모집 공고:dialogue_019|추천 요청:dialogue_020|기다리기:dialogue_021,,
+dialogue_018,guild_advisor,길드 홀에 모집 공고를 붙이면 모험가들이 찾아올 겁니다.,dialogue_022,좋은 생각이다:dialogue_023|다른 방법은?:dialogue_020,,
+dialogue_019,guild_advisor,마을 광장에 모집 공고를 붙였습니다. 곧 지원자들이 올 겁니다.,dialogue_024,,,Reputation:10
+dialogue_020,guild_advisor,다른 길드에 추천을 요청해볼 수도 있습니다.,dialogue_025,그렇게 하자:dialogue_026|생각해보겠다:dialogue_021,Reputation:100,
+dialogue_021,guild_advisor,네, 좋은 인재는 때를 기다려야 합니다.,dialogue_027,,,
+dialogue_022,guild_master,모집 공고를 작성해주세요.,dialogue_023,,,
+dialogue_023,guild_advisor,알겠습니다. 최고의 모험가들이 모일 수 있도록 작성하겠습니다.,dialogue_028,,,Gold:-50
+dialogue_024,guild_master,좋습니다. 이제 기다려봅시다.,dialogue_029,,,
+dialogue_025,guild_advisor,제가 아는 실력 있는 모험가들이 있습니다.,dialogue_030,소개해달라:dialogue_031|나중에:dialogue_021,Gold:200,
+dialogue_026,guild_advisor,추천서를 보내겠습니다. 좋은 소식이 있길 바랍니다.,dialogue_032,,,Gold:-100|Reputation:-50
+dialogue_027,guild_master,인내심을 가지고 기다려보겠습니다.,dialogue_033,,,
+dialogue_028,guild_advisor,공고를 붙였습니다. 3일 내에 지원자들이 올 겁니다.,dialogue_034,,,
+dialogue_029,guild_master,빨리 새로운 동료들을 만나고 싶군요.,dialogue_035,,,
+dialogue_030,guild_advisor,전설의 용사, 대마법사, 그리고 신성한 기사를 알고 있습니다.,dialogue_036,모두 소개해달라:dialogue_037|한 명만:dialogue_038,,
+dialogue_031,guild_advisor,당장 연락을 취하겠습니다!,dialogue_039,,,
+dialogue_032,guild_master,추천에 감사드립니다.,dialogue_040,,,
+dialogue_033,dungeon_guardian,이곳은 위험한 던전입니다. 준비되지 않은 자는 돌아가시오.,dialogue_041,준비됐다:dialogue_042|조금 더 준비하겠다:dialogue_043,Level:10,
+dialogue_034,adventurer_001,길드 모집 공고를 보고 왔습니다!,dialogue_044,환영한다:dialogue_045|실력을 보자:dialogue_046,,
+dialogue_035,adventurer_002,저도 함께하고 싶습니다!,dialogue_047,좋다:dialogue_048|테스트가 필요하다:dialogue_049,,
+dialogue_036,guild_advisor,누구를 먼저 소개할까요?,dialogue_050,,,
+dialogue_037,guild_advisor,많은 비용이 들겠지만, 최고의 팀이 될 겁니다.,dialogue_051,상관없다:dialogue_052|너무 비싸다:dialogue_038,Gold:1000,
+dialogue_038,guild_advisor,그럼 가장 추천하는 한 명만 소개하겠습니다.,dialogue_053,좋다:dialogue_054|누구인가?:dialogue_055,,
+dialogue_039,guild_advisor,곧 도착할 겁니다. 기대하셔도 좋습니다!,dialogue_056,,,
+dialogue_040,guild_master,좋은 결과가 있기를 바랍니다.,dialogue_057,,,
+dialogue_041,dungeon_guardian,많은 모험가들이 이곳에서 목숨을 잃었소.,dialogue_058,그래도 가겠다:dialogue_059|조언을 구한다:dialogue_060,,
+dialogue_042,dungeon_guardian,용기는 가상하나, 실력도 갖춰야 하오.,dialogue_061,실력을 보이겠다:dialogue_062|동료와 함께 오겠다:dialogue_063,,
+dialogue_043,dungeon_guardian,현명한 선택이오. 준비가 되면 다시 오시오.,dialogue_064,,,
+dialogue_044,guild_master,우리 길드에 온 것을 환영한다!,dialogue_065,,,NewAdventurer:1
+dialogue_045,adventurer_001,최선을 다하겠습니다!,dialogue_066,,,
+dialogue_046,guild_master,먼저 실력을 증명해보게.,dialogue_067,좋습니다!:dialogue_068|준비할 시간을 달라:dialogue_069,,
+dialogue_047,guild_master,열정이 마음에 드는군!,dialogue_070,,,NewAdventurer:1
+dialogue_048,adventurer_002,감사합니다! 실망시키지 않겠습니다!,dialogue_071,,,
+dialogue_049,guild_master,훈련장에서 실력을 보자.,dialogue_072,당장 가겠습니다:dialogue_073|장비를 정비하고 가겠습니다:dialogue_074,,
+dialogue_050,boss_monster,감히 내 영역을 침범하다니... 목숨이 아깝지 않은가!,dialogue_075,두렵지 않다!:dialogue_076|협상하자:dialogue_077,Level:20,
+dialogue_051,guild_advisor,그들과 함께라면 어떤 도전도 극복할 수 있을 겁니다.,dialogue_078,,,
+dialogue_052,guild_master,최고를 위해서는 투자가 필요하지.,dialogue_079,,,Gold:-1000|NewAdventurer:3
+dialogue_053,guild_advisor,제가 가장 신뢰하는 모험가입니다.,dialogue_080,,,
+dialogue_054,guild_master,빨리 만나보고 싶군.,dialogue_081,,,
+dialogue_055,guild_advisor,전설의 검사 '아론'입니다. 그의 실력은 의심의 여지가 없습니다.,dialogue_082,초대해달라:dialogue_083|더 알려달라:dialogue_084,,
+dialogue_056,legendary_hero,당신이 그 유명한 길드 마스터인가?,dialogue_085,그렇다:dialogue_086|아직 부족하다:dialogue_087,,
+dialogue_057,guild_master,이제 길드가 더욱 강해질 것이다.,dialogue_088,,,
+dialogue_058,dungeon_guardian,하지만 그들과 달리 당신에게는 뭔가 특별한 것이 보이는군.,dialogue_089,무엇이 보이는가?:dialogue_090|빈말은 필요없다:dialogue_091,,
+dialogue_059,dungeon_guardian,그럼 행운을 빈다. 1층부터 시작하시오.,dialogue_092,,,DungeonUnlock:1
+dialogue_060,dungeon_guardian,이 던전에는 5개의 층이 있고, 각 층마다 강력한 수호자가 있소.,dialogue_093,어떤 수호자들인가?:dialogue_094|보상은 무엇인가?:dialogue_095,,

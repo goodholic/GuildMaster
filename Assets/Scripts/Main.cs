@@ -1,5 +1,9 @@
 using UnityEngine;
+using System;
+using System.Collections;
+using System.Collections.Generic;
 using GuildMaster.Core;
+using GuildMaster.Battle; // Unit을 위해 추가
 
 namespace GuildMaster
 {
@@ -101,7 +105,7 @@ namespace GuildMaster
             if (pauseStatus)
             {
                 // Game paused - save state
-                GameManager.Instance?.SaveManager?.SaveGame();
+                GameManager.Instance?.SaveManager?.SaveGame(0);
             }
             else
             {
@@ -182,8 +186,9 @@ namespace GuildMaster
             }
             if (GUILayout.Button("Recruit Random Adventurer"))
             {
-                var randomJob = (JobClass)Random.Range(0, System.Enum.GetValues(typeof(JobClass)).Length);
-                var unit = new Unit($"Debug Hero", Random.Range(1, 10), randomJob);
+                var jobClass = (JobClass)UnityEngine.Random.Range(0, 7);
+                int level = UnityEngine.Random.Range(1, 6);
+                var unit = new Unit($"Debug Hero", level, jobClass);
                 GameManager.Instance?.GuildManager?.RecruitAdventurer(unit);
             }
             
@@ -206,15 +211,15 @@ namespace GuildMaster
             GUILayout.Label("System:");
             if (GUILayout.Button("Save Game"))
             {
-                GameManager.Instance?.SaveManager?.SaveGame();
+                GameManager.Instance?.SaveManager?.SaveGame(0);
             }
             if (GUILayout.Button("Load Game"))
             {
-                StartCoroutine(GameManager.Instance?.SaveManager?.LoadGame());
+                GameManager.Instance?.SaveManager?.LoadGame(0);
             }
             if (GUILayout.Button("Delete Save"))
             {
-                GameManager.Instance?.SaveManager?.DeleteSave();
+                GameManager.Instance?.SaveManager?.DeleteSave(0);
             }
             
             GUILayout.Space(10);
