@@ -12,11 +12,11 @@ namespace GuildMaster.Core
     public class BattleManager : MonoBehaviour
     {
         // Battle Configuration
-        public const int SQUADS_PER_SIDE = 4;
+        public const int SQUADS_PER_SIDE = 2;    // 2부대로 변경
         public const int SQUAD_ROWS = 3;
-        public const int SQUAD_COLS = 6;
-        public const int UNITS_PER_SQUAD = 9;
-        public const int TOTAL_UNITS_PER_SIDE = 36;
+        public const int SQUAD_COLS = 6;          // 6x3 그리드로 변경
+        public const int UNITS_PER_SQUAD = 18;
+        public const int TOTAL_UNITS_PER_SIDE = 36;  // 총 36명으로 변경
 
         // Battle State
         public enum BattleState

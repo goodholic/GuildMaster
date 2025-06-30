@@ -10,8 +10,8 @@ using GuildMaster.Data;
 namespace GuildMaster.Battle
 {
     /// <summary>
-    /// 4부대 vs 4부대 대규모 전투 시스템
-    /// 각 부대는 6x3 그리드에 9명의 모험가 배치 (총 36명 vs 36명)
+    /// 2부대 vs 2부대 정예 전투 시스템
+    /// 각 부대는 6x3 그리드에 18명의 모험가 배치 (총 36명 vs 36명)
     /// </summary>
     public class SquadBattleSystem : MonoBehaviour
     {
@@ -39,9 +39,9 @@ namespace GuildMaster.Battle
         [SerializeField] private float squadTurnDelay = 2f;
         
         [Header("부대 구성")]
-        public const int SQUADS_PER_GUILD = 4;
-        public const int UNITS_PER_SQUAD = 9;
-        public const int SQUAD_WIDTH = 6;
+        public const int SQUADS_PER_GUILD = 2;  // 2부대로 변경
+        public const int UNITS_PER_SQUAD = 18;
+        public const int SQUAD_WIDTH = 6;      // 6x3 그리드로 변경
         public const int SQUAD_HEIGHT = 3;
         
         // 플레이어 부대와 적 부대
@@ -78,7 +78,7 @@ namespace GuildMaster.Battle
         }
         
         /// <summary>
-        /// 대규모 전투 시작 (4부대 vs 4부대)
+        /// 정예 전투 시작 (2부대 vs 2부대)
         /// </summary>
         public void StartSquadBattle(List<Squad> playerSquadList, List<Squad> enemySquadList)
         {

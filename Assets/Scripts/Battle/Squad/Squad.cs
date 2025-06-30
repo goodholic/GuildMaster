@@ -18,8 +18,8 @@ namespace GuildMaster.Battle
     {
         // Squad Configuration
         public const int ROWS = 3;
-        public const int COLS = 6;
-        public const int MAX_UNITS = 9;
+        public const int COLS = 6;  // 6x3 그리드로 변경
+        public const int MAX_UNITS = 18;
         
         // Squad Properties
         public string Name { get; set; }
@@ -30,7 +30,7 @@ namespace GuildMaster.Battle
         public float totalPower => GetTotalCombatPower();
         public List<Unit> aliveUnits => GetAliveUnits();
         
-        // Units Grid (3x6)
+        // Units Grid (6x3)
         private Unit[,] unitsGrid = new Unit[ROWS, COLS];
         private List<Unit> unitsList = new List<Unit>();
         
@@ -234,9 +234,9 @@ namespace GuildMaster.Battle
                 case JobClass.Assassin:
                     // Side positions for flanking
                     positions.Add(new Vector2Int(0, 0));
-                    positions.Add(new Vector2Int(0, 5));
+                    positions.Add(new Vector2Int(0, COLS - 1));
                     positions.Add(new Vector2Int(1, 0));
-                    positions.Add(new Vector2Int(1, 5));
+                    positions.Add(new Vector2Int(1, COLS - 1));
                     break;
             }
             
@@ -482,6 +482,35 @@ namespace GuildMaster.Battle
                 }
             }
             return totalPower;
+        }
+
+        // Helper method to clear the squad
+        public void ClearSquad()
+        {
+            for (int row = 0; row < ROWS; row++)
+            {
+                for (int col = 0; col < COLS; col++)
+                {
+                    if (unitsGrid[row, col] != null)
+                    {
+                        unitsGrid[row, col].OnDeath -= HandleUnitDeath;
+                        unitsGrid[row, col] = null;
+                    }
+                }
+            }
+            unitsList.Clear();
+        }
+
+        // Helper method to get unit count
+        public int GetUnitCount()
+        {
+            return unitsList.Count;
+        }
+
+        // Helper method to check if squad is full
+        public bool IsFull()
+        {
+            return unitsList.Count >= MAX_UNITS;
         }
     }
 }
